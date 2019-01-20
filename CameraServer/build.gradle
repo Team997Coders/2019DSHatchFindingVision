@@ -1,0 +1,19 @@
+// Required to be pre-installed to build: Python3
+// Required to be pre-installed to run: gstreamer
+// TODO: Is this easily automatable?
+// TODO: Can we just embed the running of gstreamer into python app?
+
+buildscript {
+  dependencies {
+    classpath files("../classlib/pygrad-0.1.10-ccb.jar")
+  }
+}
+
+apply plugin: 'com.analog.garage.pygrad'
+
+python {
+    sourceDir = "src"
+    pythonExe = "python3"
+}
+
+build.dependsOn pyenv

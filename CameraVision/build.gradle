@@ -1,0 +1,129 @@
+plugins {
+  id 'com.github.johnrengelman.shadow' version '1.2.4'
+}
+
+apply plugin: 'java'
+apply plugin: 'application'
+
+// Change the line below if you change the name of your main Java class
+mainClassName = 'Main'
+// Change the line below to change the name of the output jar
+def projectName = 'CameraVision'
+// Put in your FRC team number
+def team = '997'
+// Put in a host address for network tables simulator server or leave blank for roboRio
+def nthost = 'localhost'
+// Put in a URL for the web camera
+def cameraURL = 'http://localhost:1337/mjpeg_stream'
+
+// Shouldn't need to change anything below this point
+
+apply from: 'dependencies.gradle'
+
+def nthostSwitch = ''
+if (nthost != "") {
+  nthostSwitch = "--nthost ${nthost}"
+}
+
+def scriptsDir = "${buildDir}/scripts"
+
+repositories {
+    mavenCentral()
+    maven {
+      url "http://first.wpi.edu/FRC/roborio/maven/release"
+    }
+}
+
+dependencies {
+  compile ntcoreDep()
+  compile cscoreDep()
+  compile 'org.opencv:opencv-java:3.1.0'
+  compile 'com.beust:jcommander:1.72'
+  testCompile 'junit:junit:4.11'
+  testCompile 'org.mockito:mockito-core:2.7.22'
+}
+
+test {
+  // This makes the native opencv bits available to be found and loaded by unit tests
+  systemProperty "java.library.path", "${openCvUnzipLocation}"
+  
+  // log the following test events to the console...otherwise, everything is written to a report
+  testLogging {
+    events "PASSED", "STARTED", "FAILED", "SKIPPED"
+  }
+}
+
+jar {
+  baseName = projectName
+}
+
+shadowJar {
+  baseName = projectName
+
+  doLast {
+    def commandString = "java -Djava.library.path=. -jar ${projectName}-all.jar --team ${team} ${nthostSwitch} --cameraurl \"${cameraURL}\""
+    def debugCommandString = "java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=1044 -Djava.library.path=. -jar ${projectName}-all.jar --team ${team} ${nthostSwitch} --cameraurl \"${cameraURL}\""
+
+    if (buildType == "windows") {
+      def runFile = new File("${scriptsDir}/run${projectName}.bat")
+      runFile.write commandString
+    } else {
+      def runFile = new File("${scriptsDir}/run${projectName}.sh")
+      runFile.write "while true; do\n"
+      runFile.append commandString
+      runFile.append "\n"
+      runFile.append 'echo "Server CameraServer crashed with exit code $?.  Respawning.." >&2\n'
+      runFile.append "sleep 1\n"
+      runFile.append "done\n"
+      runFile
+      def runDebugFile = new File("${scriptsDir}/run${projectName}-debug.sh")
+      runDebugFile.write debugCommandString
+    }
+  }
+}
+
+distributions {
+  main {
+    baseName = projectName
+    contents {
+      from (openCvUnzipLocation) {
+        exclude 'META-INF'
+        exclude '**/MANIFEST.MF'
+        into 'bin/'
+      }
+    }
+  }
+}
+
+task zipOutput(type: Zip) {
+  baseName = "${projectName}-all"
+  duplicatesStrategy = 'exclude'
+  dependsOn shadowJar
+  dependsOn unzipOpenCv
+  destinationDir = file("${buildDir}/distributions")
+  from (file(shadowJar.archivePath)) {
+  }
+  from (openCvUnzipLocation) {
+    exclude 'META-INF'
+    exclude '**/MANIFEST.MF'
+  }
+  if (buildType == "windows") {
+    from (file("${scriptsDir}/run${projectName}.bat")) {
+    }
+  } else {
+    from (file("${scriptsDir}/run${projectName}.sh")) {
+      fileMode 0777
+    }
+    from (file("${scriptsDir}/run${projectName}-debug.sh")) {
+      fileMode 0777
+    }
+  }
+}
+
+distZip.dependsOn unzipOpenCv
+distTar.dependsOn unzipOpenCv
+
+applicationDefaultJvmArgs = ["-Djava.library.path=${openCvUnzipLocation}"]
+
+build.dependsOn zipOutput
+run.dependsOn unzipOpenCv

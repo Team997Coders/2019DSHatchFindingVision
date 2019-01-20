@@ -1,0 +1,22 @@
+// Required to be pre-installed: Python3
+
+// TODO: Flip this back to pull from remote repo when author implements my pull request.
+//plugins {
+//  id 'com.analog.garage.pygrad' version '0.1.10'
+//}
+
+buildscript {
+  dependencies {
+    classpath files("../classlib/pygrad-0.1.10-ccb.jar")
+  }
+}
+
+apply plugin: 'com.analog.garage.pygrad'
+
+python {
+    sourceDir = "src"
+    pythonExe = "python3"
+    buildRequirements = ['pynetworktables']
+}
+
+build.dependsOn pyenv
