@@ -1,4 +1,4 @@
-# Bunny Bot 2018 sample vision system
+# Deepspace 2019 Hatchfinding Vision Project
 
 This is a sample project based on the [WPILib sample build system](https://github.com/wpilibsuite/VisionBuildSamples) for building Java based vision targeting for running on systems other than the roboRIO. The object of this project is to make it easy to design, develop, code, test, and deploy FIRST WPILib vision processing apps from a Windows workstation. This project currently supports the following target platforms with a Windows development environment:
 
@@ -63,7 +63,7 @@ You can develop and test a WPILib image processing application without needing a
 JUnit and Mockito have been used to demonstrate automated testing of vision processing application, which factors out external dependencies (like having to have a camera plugged in).
 
 This complete sample gets an image from a local camera stream. It then restreams the input image in it's raw form in order to make it viewable on another system.
-It then creates an OpenCV sink from the camera, which allows us to grab OpenCV images. It then creates an output stream for an OpenCV image, for instance, so you can stream an annotated image. The default sample attempts to identify a blue raquetball for the [2018 Bunny Bot](http://team1540.org/bunnybots) game. In addition, a [NetworkTables simultated server](https://github.com/robotpy/pynetworktables) is set up, so you can send data regarding the targets to a server that simulates a robot.  A command line arg enables you to change this setting. Command lines args are as follows:
+It then creates an OpenCV sink from the camera, which allows us to grab OpenCV images. It then creates an output stream for an OpenCV image, for instance, so you can stream an annotated image. In addition, a [NetworkTables simultated server](https://github.com/robotpy/pynetworktables) is set up, so you can send data regarding the targets to a server that simulates a robot.  A command line arg enables you to change this setting. Command lines args are as follows:
 
 <p>--team or -t = "FIRST team number"
 <p>--nthost or -h = "NetworkTables server host IP address (for testing)"
@@ -79,6 +79,4 @@ The build script provides a few other configuration options. These include selec
 Please see the `build.gradle` file for where to change these. 
 
 ## Further Documentation
-Youtube videos are located on the [Spartan Robotics](https://www.youtube.com/channel/UCekeDJzimFuocARIjuiDrGQ) Youtube channel.  These further describe the [system architecture](https://docs.google.com/drawings/d/1QBvX5yAShsnoBBzIV375vycgUSIo_4coL-5SogxS-IU), the project, provide a code walkthrough, discuss the gradle build system, and introduce automated testing.
-
 Having trouble executing tests that depend on Java Native Interfaces (JNI) like opencv?  See this [Chief Delphi Post](https://www.chiefdelphi.com/forums/showthread.php?t=167097).
