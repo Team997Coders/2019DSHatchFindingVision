@@ -88,8 +88,7 @@ public class Main {
     ImagePump imagePump = new ImagePump(imageSink);
 
     // Get image processing components.
-    ImageProcessor blueBallImageProcessor = BlueBallImageProcessorFactory.CreateImageProcessor(publishingTable);
-    ImageProcessor redBallImageProcessor = RedBallImageProcessorFactory.CreateImageProcessor(publishingTable);
+    ImageProcessor imageProcessor = HatchTargetImageProcessorFactory.CreateImageProcessor(publishingTable);
 
     // Init these vars outside processing loop, as they are expensive to create.
     Mat inputImage = new Mat();
@@ -103,20 +102,16 @@ public class Main {
 
     while (!Thread.currentThread().isInterrupted()) {
       if (!inputImage.empty()) {
-        // Process the image looking for respective color balls...concurrently
-        // ProcessAsync chews on the image and writes to 
-        // asynchronously.  Also, pump the frame grabber for the next frame.
-        redBallImageProcessor.processAsync(inputImage);
-        blueBallImageProcessor.processAsync(inputImage);
+        // Process the image looking for targets...concurrently
+        // with pumping the frame grabber for the next frame.
+        imageProcessor.processAsync(inputImage);
         imagePump.pumpAsync();
 
         // Await image processing to finsh
-        redBallImageProcessor.awaitProcessCompletion();
-        blueBallImageProcessor.awaitProcessCompletion();
+        imageProcessor.awaitProcessCompletion();
 
         // Annotate the image
-        outputImage = redBallImageProcessor.annotate(inputImage);
-        outputImage2 = blueBallImageProcessor.annotate(outputImage);
+        outputImage = imageProcessor.annotate(inputImage);
 
         // Write out the image
         imageSource.putFrame(outputImage2);

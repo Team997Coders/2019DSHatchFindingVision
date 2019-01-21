@@ -27,7 +27,7 @@ public class ImageProcessorUnitTest
     public void itShouldProcessMyPipeline() {
         // Assemble
         // use Mockito to mock a pipeline and network table writer object
-        IBallPipeline pipelineMock = mock(IBallPipeline.class);
+        HatchTargetPipeline pipelineMock = mock(HatchTargetPipeline.class);
         INetworkTableWriter networkTableWriterMock = mock(INetworkTableWriter.class);
         ImageProcessor imageProcessor = new ImageProcessor(pipelineMock, networkTableWriterMock);
         Mat emptyImage = new Mat();
@@ -49,7 +49,7 @@ public class ImageProcessorUnitTest
     public void itShouldWriteToNetworkTables() {
         // Assemble
         // use Mockito to mock a pipeline and network table writer object
-        IBallPipeline pipelineMock = mock(IBallPipeline.class);
+        HatchTargetPipeline pipelineMock = mock(HatchTargetPipeline.class);
         INetworkTableWriter networkTableWriterMock = mock(INetworkTableWriter.class);
         ImageProcessor imageProcessor = new ImageProcessor(pipelineMock, networkTableWriterMock);
         Mat emptyImage = new Mat();

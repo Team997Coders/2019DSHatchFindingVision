@@ -12,11 +12,8 @@ import static org.mockito.Mockito.*;
  */
 public class NetworkTableWriterUnitTest {
     /**
-     * Test that the NetworkTableWriter class writes the ball found boolean
-     * to a network table. Note the use of a helper concrete class to do this.
-     * There are Mockito-isms one could do to pull this off, but this actually seemed easier.
-     * 
-     * @see <a href="https://www.baeldung.com/junit-test-abstract-class">Testing Abstract Classes</a>
+     * Test that the NetworkTableWriter class writes the target found boolean
+     * to a network table.
      * 
      * @author Chuck Benedict, Mentor, Team 997
      */
@@ -24,23 +21,23 @@ public class NetworkTableWriterUnitTest {
     public void itWritesBallFoundResult() {
         // Assemble
 
-        boolean ballFound = true;
+        boolean targetFound = true;
         // Use Mockito to mock up our prerequisites
         // Mock up our pipeline interpreter
-        BallPipelineInterpreter interpreterMock = mock(BallPipelineInterpreter.class);
-        when(interpreterMock.ballsFound()).thenReturn(ballFound);
+        HatchTargetPipelineInterpreter interpreterMock = mock(HatchTargetPipelineInterpreter.class);
+        when(interpreterMock.targetsFound()).thenReturn(targetFound);
 
         // Mock up a network table to write to
         NetworkTable networkTableMock = mock(NetworkTable.class);
 
         // Wire up class under test
-        NetworkTableWriterConcrete networkTableWriter = new NetworkTableWriterConcrete(interpreterMock, networkTableMock);
+        NetworkTableWriter networkTableWriter = new NetworkTableWriter(interpreterMock, networkTableMock);
 
         // Act
         networkTableWriter.write();
 
         // Assert
-        verify(networkTableMock, times(1)).putBoolean(networkTableWriter.getBallFoundKey(), ballFound);
+        verify(networkTableMock, times(1)).putBoolean(networkTableWriter.getTargetFoundKey(), targetFound);
     }
 
     /**
@@ -55,19 +52,19 @@ public class NetworkTableWriterUnitTest {
         long ballCount = 10;
         // Use Mockito to mock up our prerequisites
         // Mock up our pipeline interpreter
-        BallPipelineInterpreter interpreterMock = mock(BallPipelineInterpreter.class);
-        when(interpreterMock.ballCount()).thenReturn(ballCount);
+        HatchTargetPipelineInterpreter interpreterMock = mock(HatchTargetPipelineInterpreter.class);
+        when(interpreterMock.targetCount()).thenReturn(ballCount);
 
         // Mock up a network table to write to
         NetworkTable networkTableMock = mock(NetworkTable.class);
 
         // Wire up class under test
-        NetworkTableWriterConcrete networkTableWriter = new NetworkTableWriterConcrete(interpreterMock, networkTableMock);
+        NetworkTableWriter networkTableWriter = new NetworkTableWriter(interpreterMock, networkTableMock);
 
         // Act
         networkTableWriter.write();
 
         // Assert
-        verify(networkTableMock, times(1)).putNumber(networkTableWriter.getBallCountKey(), ballCount);
+        verify(networkTableMock, times(1)).putNumber(networkTableWriter.getTargetCountKey(), ballCount);
     }
 }
