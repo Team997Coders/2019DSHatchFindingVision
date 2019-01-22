@@ -13,7 +13,10 @@ apply plugin: 'com.analog.garage.pygrad'
 
 python {
     sourceDir = "src"
-    pythonExe = "python3"
+    // Windows vs linux naming of python versions!
+    pythonExe = "python"
 }
 
 build.dependsOn pyenv
+
+task wrapper(type: Wrapper) { gradleVersion = '5.1.1' }

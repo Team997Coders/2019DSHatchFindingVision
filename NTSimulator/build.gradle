@@ -15,8 +15,11 @@ apply plugin: 'com.analog.garage.pygrad'
 
 python {
     sourceDir = "src"
-    pythonExe = "python3"
+    // Windows vs linux naming of python!
+    pythonExe = "python"
     buildRequirements = ['pynetworktables']
 }
 
 build.dependsOn pyenv
+
+task wrapper(type: Wrapper) { gradleVersion = '5.1.1' }

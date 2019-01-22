@@ -1,0 +1,26 @@
+plugins {
+  id "com.ullink.msbuild" version "3.1"
+}
+
+task dotnetRestore(type:Exec) {
+  inputs.file("FocusUF.csproj")
+  commandLine 'dotnet', 'restore'
+  outputs.dir("obj");
+}
+
+msbuild {
+  dependsOn dotnetRestore
+  projectFile = file('FocusUF.csproj')
+ 
+  targets = ['Clean', 'Rebuild']
+ 
+  destinationDir = 'build/msbuild/bin'
+}
+
+build.dependsOn msbuild
+
+clean {
+  delete "obj"
+}
+
+task wrapper(type: Wrapper) { gradleVersion = '5.1.1' }

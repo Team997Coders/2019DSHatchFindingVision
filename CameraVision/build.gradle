@@ -1,5 +1,5 @@
 plugins {
-  id 'com.github.johnrengelman.shadow' version '1.2.4'
+  id 'com.github.johnrengelman.shadow' version '4.0.4'
 }
 
 apply plugin: 'java'
@@ -39,9 +39,16 @@ dependencies {
   compile cscoreDep()
   compile 'org.opencv:opencv-java:3.1.0'
   compile 'com.beust:jcommander:1.72'
-  testCompile 'junit:junit:4.11'
-  testCompile 'org.mockito:mockito-core:2.7.22'
+  testCompile 'junit:junit:4.13-beta-1'
+  testCompile 'org.mockito:mockito-core:2.23.4'
 }
+
+task wrapper(type: Wrapper) { gradleVersion = '5.1.1' }
+
+// So much pain...gradle test runner and Java 11 incompatibilities
+// https://github.com/gradle/gradle/issues/5731
+targetCompatibility = '1.8'
+sourceCompatibility = '1.8'
 
 test {
   // This makes the native opencv bits available to be found and loaded by unit tests

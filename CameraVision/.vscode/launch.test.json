@@ -5,10 +5,10 @@
             {
                 "name": "CameraVision",
                 "projectName": "CameraVision",
-                "workingDirectory": "C:\\Users\\chuck\\Documents\\BB2018BallFindingVision\\CameraVision",
+                "workingDirectory": "C:\\Users\\chuck\\Documents\\2019DSHatchFindingVision\\CameraVision",
                 "args": [],
                 "vmargs": [],
-                "env": {"PATH": "C:\\Users\\chuck\\Documents\\BB2018BallFindingVision\\CameraVision\\build\\opencv"},
+                "env": {"PATH": "C:\\Users\\chuck\\Documents\\2019DSHatchFindingVision\\CameraVision\\build\\opencv"},
                 "preLaunchTask": ""
             }
         ]
@@ -19,10 +19,10 @@
             {
                 "name": "CameraVision",
                 "projectName": "CameraVision",
-                "workingDirectory": "C:\\Users\\chuck\\Documents\\BB2018BallFindingVision\\CameraVision",
+                "workingDirectory": "C:\\Users\\chuck\\Documents\\2019DSHatchFindingVision\\CameraVision",
                 "args": [],
                 "vmargs": [],
-                "env": {"PATH": "C:\\Users\\chuck\\Documents\\BB2018BallFindingVision\\CameraVision\\build\\opencv"},
+                "env": {"PATH": "C:\\Users\\chuck\\Documents\\2019DSHatchFindingVision\\CameraVision\\build\\opencv"},
                 "preLaunchTask": ""
             }
         ]
