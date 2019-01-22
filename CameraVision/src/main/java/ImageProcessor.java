@@ -78,6 +78,8 @@ public class ImageProcessor {
     // Write a processed image that you want to restream
     // This is a marked up image of what the camera sees
 
+    inputImage.copyTo(outputImage);
+    
     // Draw best-fit green rectangles around targets
     Scalar green = new Scalar(81, 190, 0);
     for (MatOfPoint contour: pipeline.findContoursOutput()) {

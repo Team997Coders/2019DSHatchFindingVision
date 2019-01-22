@@ -93,7 +93,6 @@ public class Main {
     // Init these vars outside processing loop, as they are expensive to create.
     Mat inputImage = new Mat();
     Mat outputImage = new Mat();
-    Mat outputImage2 = new Mat();
 
     System.out.println("Processing stream...");
 
@@ -114,7 +113,8 @@ public class Main {
         outputImage = imageProcessor.annotate(inputImage);
 
         // Write out the image
-        imageSource.putFrame(outputImage2);
+//        imageSource.putFrame(inputImage);
+        imageSource.putFrame(outputImage);
 
         // Get the next image
         inputImage = imagePump.awaitPumpCompletion();
