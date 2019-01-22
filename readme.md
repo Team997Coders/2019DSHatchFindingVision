@@ -18,6 +18,7 @@ This is a sample project based on the [WPILib sample build system](https://githu
   *  Be sure to add Python to path.  It is an unchecked option on the install dialog.
   *  pip (automatic for Windows)
 * [Java 8](https://developers.redhat.com/products/openjdk/download/)
+  * But now will work with Java 11 on development system
 * [gstreamer](https://gstreamer.freedesktop.org/download/)
   * Run the complete install instead of the typical install.
   * Double check that the gstreamer directory is in your path.  On Windows, this should be
