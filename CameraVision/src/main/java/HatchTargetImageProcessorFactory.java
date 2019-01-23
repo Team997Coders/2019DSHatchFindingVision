@@ -7,16 +7,18 @@ import edu.wpi.first.wpilibj.networktables.*;
 public class HatchTargetImageProcessorFactory {
   /**
    * Static helper to create an image processor instance.
-   * @param networkTable  The network table to write to
-   * @return
+   * @param networkTable  The network table to write all the image processed goodies to
+   * @return  A freshly instantiated image processor
    */
-    public static ImageProcessor CreateImageProcessor(NetworkTable networkTable) {
-        HatchTargetPipeline pipeline = new HatchTargetPipeline();
-        return 
-          new ImageProcessor(
-            pipeline, 
-            new NetworkTableWriter(
-              new HatchTargetPipelineInterpreter(pipeline), 
-              networkTable));
-    }
+  public static ImageProcessor CreateImageProcessor(NetworkTable networkTable) {
+    HatchTargetPipeline pipeline = new HatchTargetPipeline();
+    HatchTargetPipelineInterpreter interpreter = new HatchTargetPipelineInterpreter(pipeline);
+    return 
+      new ImageProcessor(
+        pipeline, 
+        new NetworkTableWriter(
+          interpreter,
+          networkTable),
+        new ImageAnnotator(interpreter));
+  }
 }

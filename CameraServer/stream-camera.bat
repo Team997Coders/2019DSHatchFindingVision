@@ -9,4 +9,4 @@ goto LAUNCH
 set DEVICEINDEX=%1
 
 :LAUNCH
-gst-launch-1.0 ksvideosrc device-index=%DEVICEINDEX% ! image/jpeg, framerate=30/1, width=640, height=480 ! queue ! multipartmux boundary=spionisto ! queue leaky=2 ! tcpclientsink host=127.0.0.1 port=9999
+gst-launch-1.0 ksvideosrc device-index=%DEVICEINDEX% num-buffers=-1 ! video/x-raw,framerate=30/1,width=640,height=480 ! jpegenc ! queue ! multipartmux boundary=spionisto ! queue leaky=2 ! tcpclientsink host=127.0.0.1 port=9999

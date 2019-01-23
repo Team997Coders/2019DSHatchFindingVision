@@ -15,8 +15,8 @@
         {
             "label": "Local Debug Startup",
             "type": "shell",
-            "command": "./local-debug-startup.bat",
-            "dependsOn": "build",
+            "command": "local-debug-startup.bat",
+            "dependsOn": "buildCameraVision",
             "args": [
                 "1"
             ],
@@ -25,9 +25,9 @@
             }
         },
         {
-            "label": "build",
+            "label": "buildCameraVision",
             "type": "shell",
-            "command": "./gradlew build",
+            "command": "gradlew :CameraVision:build",
             "args": [],
             "options": {
                 "cwd": "${workspaceFolder}\\.."

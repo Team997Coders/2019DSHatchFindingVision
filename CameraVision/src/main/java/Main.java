@@ -107,13 +107,9 @@ public class Main {
         imagePump.pumpAsync();
 
         // Await image processing to finsh
-        imageProcessor.awaitProcessCompletion();
-
-        // Annotate the image
-        outputImage = imageProcessor.annotate(inputImage);
+        outputImage = imageProcessor.awaitProcessCompletion();
 
         // Write out the image
-//        imageSource.putFrame(inputImage);
         imageSource.putFrame(outputImage);
 
         // Get the next image

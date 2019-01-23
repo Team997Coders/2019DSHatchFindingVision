@@ -52,11 +52,8 @@ public class ImagePump {
      */
     private Mat pumpInternal() {
         long frameTime;
-System.out.println("Grabbing frame");
         frameTime = imageSink.grabFrame(inputImage);
-System.out.println("Frame grabbed");
         if (frameTime == 0) {
-System.out.println("Frame time zero");
           System.out.println(imageSink.getError());
           return new Mat();
         }
