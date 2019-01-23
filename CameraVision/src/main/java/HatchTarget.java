@@ -11,7 +11,11 @@ import org.opencv.core.Point;
  * the rectangles that make it a target.
  */
 public class HatchTarget {
-  double TARGETTAPEWIDTHININCHES = 2.0;
+  private final double RANGECALIBRATIONININCHES = 85.5;
+  private final double FOVCALIBRATIONININCHES = 54;
+  private final double FOVPIXELWIDTH = 640;
+  private final double HATCHTARGETWIDTHININCHES = 12;
+  private final double tanTheta = FOVCALIBRATIONININCHES / (2 * RANGECALIBRATIONININCHES);
   RotatedRect leftRectangle;
   RotatedRect rightRectangle;
 
@@ -82,16 +86,24 @@ public class HatchTarget {
 
   /**
    * Range to target in inches.
+   * 
+   * @see https://wpilib.screenstepslive.com/s/3120/m/8731/l/90361-identifying-and-processing-the-targets
    */
   public double rangeInInches() {
-    return 0;
+    //d = Tin*FOVpixel/(2*Tpixel*tanΘ)
+    RotatedRect rect = targetRectangle();
+    double width = rect.size.width > rect.size.height ? rect.size.width : rect.size.height;
+    return (HATCHTARGETWIDTHININCHES * FOVPIXELWIDTH) / (2 * width * tanTheta);
   }
 
   /**
-   * Angle formed between wall of target and line segment drawn from robot position
-   * to target.
+   * Angle formed between plane of target and line segment drawn from robot position
+   * to center of target.
+   * 
+   * @see http://answers.opencv.org/question/56744/converting-pixel-displacement-into-other-unit/?comment=56918#comment-56918
    */
   public double thetaInDegrees() {
+    // TODO!
     return 0;
   }
 
