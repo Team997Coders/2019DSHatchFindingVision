@@ -11,14 +11,11 @@ import org.opencv.core.Point;
  * the rectangles that make it a target.
  */
 public class HatchTarget {
-  private final double RANGECALIBRATIONININCHES = 85.5;
-  private final double FOVCALIBRATIONININCHES = 54;
-  private final double FOVPIXELWIDTH = 640;
 //  private final double HATCHTARGETWIDTHININCHES = 14.5; // School mock target
   private final double HATCHTARGETWIDTHININCHES = 12; // Home mock target
-  private final double tanTheta = FOVCALIBRATIONININCHES / (2 * RANGECALIBRATIONININCHES);
   RotatedRect leftRectangle;
   RotatedRect rightRectangle;
+  CameraParameters cameraParameters;
 
   /**
    * Custom exception to indicate an invalid set of rotation
@@ -45,9 +42,11 @@ public class HatchTarget {
    * @throws TargetRectanglesAngleException   Exception thrown if rectangle angles are not valid.
    */
   public HatchTarget(RotatedRect leftRectangle, 
-      RotatedRect rightRectangle) throws TargetRectanglesAngleException {
+      RotatedRect rightRectangle,
+      CameraParameters cameraParameters) throws TargetRectanglesAngleException {
     this.leftRectangle = leftRectangle;
     this.rightRectangle = rightRectangle;
+    this.cameraParameters = cameraParameters;
     validateTargetRectanglesRotationAngles();
   }
 
@@ -91,10 +90,14 @@ public class HatchTarget {
    * @see https://wpilib.screenstepslive.com/s/3120/m/8731/l/90361-identifying-and-processing-the-targets
    */
   public double rangeInInches() {
-    //d = Tin*FOVpixel/(2*Tpixel*tanΘ)
     RotatedRect rect = targetRectangle();
     double width = rect.size.width > rect.size.height ? rect.size.width : rect.size.height;
-    return (HATCHTARGETWIDTHININCHES * FOVPIXELWIDTH) / (2 * width * tanTheta);
+    // TODO: This does not compensate for an off axis target...only a target on a plane 90 degrees from camera.
+    // One idea is to compare the widths of the interior rectangles...the degree of difference should tells us
+    // something about the angle. We are using the hatch target width below but could use a normalized tape
+    // width since we know all the tape width is 2 inches.
+    // d = Tin*FOVpixel/(2*Tpixel*tanΘ)
+    return (HATCHTARGETWIDTHININCHES * cameraParameters.getFOVPixelWidth()) / (2 * width * cameraParameters.getTanTheta());
   }
 
   /**

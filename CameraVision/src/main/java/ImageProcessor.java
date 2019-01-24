@@ -7,7 +7,7 @@ import java.util.concurrent.*;
  * hatch target pipeline.
  */
 public class ImageProcessor {
-  private HatchTargetPipeline pipeline;
+  private IHatchTargetPipeline pipeline;
   private INetworkTableWriter networkTableWriter;
   private ImageAnnotator imageAnnotator;
   private ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -19,7 +19,7 @@ public class ImageProcessor {
    * @param pipeline              The pipeline to process
    * @param networkTableWriter    A network table writer to send results to
    */
-  public ImageProcessor(HatchTargetPipeline pipeline, 
+  public ImageProcessor(IHatchTargetPipeline pipeline, 
       INetworkTableWriter networkTableWriter, 
       ImageAnnotator imageAnnotator) {
     if (pipeline == null) {

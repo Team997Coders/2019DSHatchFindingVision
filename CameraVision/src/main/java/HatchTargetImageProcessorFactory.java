@@ -10,9 +10,8 @@ public class HatchTargetImageProcessorFactory {
    * @param networkTable  The network table to write all the image processed goodies to
    * @return  A freshly instantiated image processor
    */
-  public static ImageProcessor CreateImageProcessor(NetworkTable networkTable) {
-    HatchTargetPipeline pipeline = new HatchTargetPipeline();
-    HatchTargetPipelineInterpreter interpreter = new HatchTargetPipelineInterpreter(pipeline);
+  public static ImageProcessor CreateImageProcessor(NetworkTable networkTable, CameraParameters cameraParameters, IHatchTargetPipeline pipeline) {
+    HatchTargetPipelineInterpreter interpreter = new HatchTargetPipelineInterpreter(pipeline, cameraParameters);
     return 
       new ImageProcessor(
         pipeline, 

@@ -13,54 +13,54 @@ import static org.mockito.Mockito.*;
  */
 public class ImageProcessorUnitTest 
 {
-    // This must be done in order to call opencv classes
-    static {
-        System.loadLibrary("opencv_java310");
-    }
+	// This must be done in order to call opencv classes
+	static {
+		System.loadLibrary("opencv_java310");
+	}
 
-    /**
-     * Test that the ImageProcessor calls the process method, asynchronously,
-     * of the passed in pipeline. For this test, we do not care what the pipeline
-     * itself actually does.
-     */
-    @Test
-    public void itShouldProcessMyPipeline() {
-        // Assemble
-        // use Mockito to mock a pipeline and network table writer object
-        HatchTargetPipeline pipelineMock = mock(HatchTargetPipeline.class);
-        INetworkTableWriter networkTableWriterMock = mock(INetworkTableWriter.class);
-        ImageAnnotator imageAnnotatorMock = mock(ImageAnnotator.class);
-        ImageProcessor imageProcessor = new ImageProcessor(pipelineMock, networkTableWriterMock, imageAnnotatorMock);
-        Mat emptyImage = new Mat();
+	/**
+	 * Test that the ImageProcessor calls the process method, asynchronously,
+	 * of the passed in pipeline. For this test, we do not care what the pipeline
+	 * itself actually does.
+	 */
+	@Test
+	public void itShouldProcessMyPipeline() {
+		// Assemble
+		// use Mockito to mock a pipeline and network table writer object
+		IHatchTargetPipeline pipelineMock = mock(IHatchTargetPipeline.class);
+		INetworkTableWriter networkTableWriterMock = mock(INetworkTableWriter.class);
+		ImageAnnotator imageAnnotatorMock = mock(ImageAnnotator.class);
+		ImageProcessor imageProcessor = new ImageProcessor(pipelineMock, networkTableWriterMock, imageAnnotatorMock);
+		Mat emptyImage = new Mat();
 
-        // Act
-        imageProcessor.processAsync(emptyImage);
-        imageProcessor.awaitProcessCompletion();
+		// Act
+		imageProcessor.processAsync(emptyImage);
+		imageProcessor.awaitProcessCompletion();
 
-        //Assert
-        verify(pipelineMock, times(1)).process(emptyImage);
-    }
+		//Assert
+		verify(pipelineMock, times(1)).process(emptyImage);
+	}
 
-    /**
-     * Test that the ImageProcessor calls the write method, asynchronously,
-     * of the passed in networkTablesWriter. For this test, we do not care what the write
-     * itself actually does.
-     */
-    @Test
-    public void itShouldWriteToNetworkTables() {
-        // Assemble
-        // use Mockito to mock a pipeline and network table writer object
-        HatchTargetPipeline pipelineMock = mock(HatchTargetPipeline.class);
-        INetworkTableWriter networkTableWriterMock = mock(INetworkTableWriter.class);
-        ImageAnnotator imageAnnotatorMock = mock(ImageAnnotator.class);
-        ImageProcessor imageProcessor = new ImageProcessor(pipelineMock, networkTableWriterMock, imageAnnotatorMock);
-        Mat emptyImage = new Mat();
+	/**
+	 * Test that the ImageProcessor calls the write method, asynchronously,
+	 * of the passed in networkTablesWriter. For this test, we do not care what the write
+	 * itself actually does.
+	 */
+	@Test
+	public void itShouldWriteToNetworkTables() {
+		// Assemble
+		// use Mockito to mock a pipeline and network table writer object
+		IHatchTargetPipeline pipelineMock = mock(IHatchTargetPipeline.class);
+		INetworkTableWriter networkTableWriterMock = mock(INetworkTableWriter.class);
+		ImageAnnotator imageAnnotatorMock = mock(ImageAnnotator.class);
+		ImageProcessor imageProcessor = new ImageProcessor(pipelineMock, networkTableWriterMock, imageAnnotatorMock);
+		Mat emptyImage = new Mat();
 
-        // Act
-        imageProcessor.processAsync(emptyImage);
-        imageProcessor.awaitProcessCompletion();
+		// Act
+		imageProcessor.processAsync(emptyImage);
+		imageProcessor.awaitProcessCompletion();
 
-        //Assert
-        verify(networkTableWriterMock, times(1)).write();
-    }
+		//Assert
+		verify(networkTableWriterMock, times(1)).write();
+	}
 }

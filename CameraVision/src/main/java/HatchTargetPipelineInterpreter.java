@@ -16,7 +16,8 @@ import org.opencv.imgproc.Imgproc;
 */
 public class HatchTargetPipelineInterpreter {
 	// Processed pipeline that we will do the interpretation against
-	private HatchTargetPipeline pipeline;
+	private IHatchTargetPipeline pipeline;
+	private CameraParameters cameraParameters;
 
 	/**
 	 * A comparator class for sorting rotated rectangles on the
@@ -34,12 +35,17 @@ public class HatchTargetPipelineInterpreter {
 	*
 	* @param pipeline	A processed pipeline that returns filtered contour results
 	*/
-	public HatchTargetPipelineInterpreter(HatchTargetPipeline pipeline) {
+	public HatchTargetPipelineInterpreter(IHatchTargetPipeline pipeline, CameraParameters cameraParameters) {
 		if (pipeline == null)
 		{
 			throw new IllegalArgumentException("Pipline cannot be null.");
 		}
+		if (cameraParameters == null)
+		{
+			throw new IllegalArgumentException("Camera parameters cannot be null.");
+		}
 		this.pipeline = pipeline;
+		this.cameraParameters = cameraParameters;
 	}
 
 	/**
@@ -93,7 +99,7 @@ public class HatchTargetPipelineInterpreter {
 				rightRectangle = iterator.next();
 				try {
 					// Try to create a hatch target
-					HatchTarget hatchTarget = new HatchTarget(leftRectangle, rightRectangle);
+					HatchTarget hatchTarget = new HatchTarget(leftRectangle, rightRectangle, cameraParameters);
 					// If we have an instantiated hatch target, add it to the list
 					hatchTargets.add(hatchTarget);
 					// Move to the next target to examine

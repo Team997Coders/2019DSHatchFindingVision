@@ -33,6 +33,12 @@ public class Main {
 
     NetworkTable publishingTable = null;
 
+    // Wire up camera parameters for a specific camera...this could be parameterized from command line
+    CameraParameters cameraParameters = new Lifecam5000CameraParameters();
+
+    // Wire up the pipeline to use for image processing
+    IHatchTargetPipeline pipeline = new Lifecam5000HatchTargetPipeline();
+
     if (!runtimeSettings.getNoNT()) {
       NetworkTable.setClientMode();
       NetworkTable.setTeam(runtimeSettings.getTeam());
@@ -88,7 +94,7 @@ public class Main {
     ImagePump imagePump = new ImagePump(imageSink);
 
     // Get image processing components.
-    ImageProcessor imageProcessor = HatchTargetImageProcessorFactory.CreateImageProcessor(publishingTable);
+    ImageProcessor imageProcessor = HatchTargetImageProcessorFactory.CreateImageProcessor(publishingTable, cameraParameters, pipeline);
 
     // Init these vars outside processing loop, as they are expensive to create.
     Mat inputImage = new Mat();
