@@ -1,25 +1,26 @@
 plugins {
-    // Adds empty build, clean, and assemble tasks to project
-    id 'base'
-    // Simple way to push apps to raspberry pi
-    // Big shout out to https://github.com/int128/gradle-ssh-plugin
-    // for enabling interaction to remote system over ssh using gradle.  Nice!
-    id 'org.hidetake.ssh' version '2.9.0'
+	// Adds empty build, clean, and assemble tasks to project
+	id 'base'
+	// Simple way to push apps to raspberry pi
+	// Big shout out to https://github.com/int128/gradle-ssh-plugin
+	// for enabling interaction to remote system over ssh using gradle.  Nice!
+	id 'org.hidetake.ssh' version '2.9.0'
 }
 
-allprojects {
-    // NOTE: If you do a build on Windows targeting another architecture, tests
-    // will (naturally) fail.  Therefore, you can do:
-    // gradlew build -x test -Ptarget="arm-raspbian"
-    // If development of Windows and targeting windows, simply do:
-    // gradlew build
-    // valid targets = windows (default), arm-raspbian, armhf
-    // Also note that the python apps build source distributions only, so
-    // it does not matter which target is selected for those.  'pip install'
-    // will work appropriately regardless of the target platform.
+// NOTE: If you do a build on Windows targeting another architecture, tests
+// will (naturally) fail.  Therefore, you can do:
+// gradlew build -x test -Ptarget="arm-raspbian"
+// If development of Windows and targeting windows, simply do:
+// gradlew build
+// valid targets = windows (default), arm-raspbian, armhf
+// Also note that the python apps build source distributions only, so
+// it does not matter which target is selected for those.  'pip install'
+// will work appropriately regardless of the target platform.
 
-    ext.buildType = project.hasProperty('target') ? project.property('target') : 'windows'
-}
+ext.buildType = project.hasProperty('target') ? project.property('target') : 'windows'
+ext.isDevHostWindows = System.getProperty("os.name").toLowerCase().contains("windows") ? true : false
+ext.isDevHostOSX = System.getProperty("os.name").toLowerCase().contains("os x") ? true : false
+ext.isDevHostLinux = !(ext.isDevHostWindows || ext.isDevHostOSX)
 
 def binDirectory = file("${rootDir}/bin")
 def scriptsDirectory = "${rootDir}/scripts"
@@ -63,14 +64,20 @@ task buildPythonVirtualEnvironment(type: Exec) {
   // Assumption: venv is installed...which it is for the binary msi version of Python I got for Windows
   description "Creates a virtual python environment in the root bin directory."
   outputs.dir "${pythonDirectory}"
-  //TODO: Windows vs linux python naming!
-  commandLine "python3", "-m", "venv", "--clear", "${pythonDirectory}"
+  if (isDevHostWindows) {
+    commandLine "python", "-m", "venv", "--clear", "${pythonDirectory}"
+  } else {
+    commandLine "python3", "-m", "venv", "--clear", "${pythonDirectory}"
+  }
 }
 
 task installIPCameraApp(type: Exec) {
     dependsOn ':CameraServer:pydist'
-    //TODO: Windows vs. linux!
-    commandLine "${pythonDirectory}/bin/pip", "install", "--upgrade", "--find-links", "file://${rootProject.projectDir}/CameraServer/build/python/dist", "ipcamera"
+    if (isDevHostWindows) {
+        commandLine "${pythonDirectory}/scripts/pip", "install", "--upgrade", "--find-links", "file://${rootProject.projectDir}/CameraServer/build/python/dist", "ipcamera"
+    } else {
+        commandLine "${pythonDirectory}/bin/pip", "install", "--upgrade", "--find-links", "file://${rootProject.projectDir}/CameraServer/build/python/dist", "ipcamera"
+    }
     doLast {
         copy {
             into binDirectory
@@ -86,8 +93,11 @@ task installIPCameraApp(type: Exec) {
 
 task installNTServerApp(type: Exec) {
   dependsOn ':NTSimulator:pydist'
-  //TODO: Windows vs linux! (scripts)
-  commandLine "${pythonDirectory}/bin/pip", "install", "--upgrade", "--find-links", "file://${rootProject.projectDir}/NTSimulator/build/python/dist", "ntserver"
+	if (isDevHostWindows) {
+  	commandLine "${pythonDirectory}/scripts/pip", "install", "--upgrade", "--find-links", "file://${rootProject.projectDir}/NTSimulator/build/python/dist", "ntserver"
+	} else {
+  	commandLine "${pythonDirectory}/bin/pip", "install", "--upgrade", "--find-links", "file://${rootProject.projectDir}/NTSimulator/build/python/dist", "ntserver"
+	}
 }
 
 task installVisionApp(type: Copy) {
