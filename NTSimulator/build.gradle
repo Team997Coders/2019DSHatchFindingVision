@@ -15,8 +15,8 @@ apply plugin: 'com.analog.garage.pygrad'
 
 python {
     sourceDir = "src"
-    // Windows vs linux naming of python!
-    pythonExe = "python"
+    // TODO: Windows vs linux naming of python!
+    pythonExe = "python3"
     buildRequirements = ['pynetworktables']
 }
 

@@ -14,7 +14,8 @@ public class HatchTarget {
   private final double RANGECALIBRATIONININCHES = 85.5;
   private final double FOVCALIBRATIONININCHES = 54;
   private final double FOVPIXELWIDTH = 640;
-  private final double HATCHTARGETWIDTHININCHES = 12;
+//  private final double HATCHTARGETWIDTHININCHES = 14.5; // School mock target
+  private final double HATCHTARGETWIDTHININCHES = 12; // Home mock target
   private final double tanTheta = FOVCALIBRATIONININCHES / (2 * RANGECALIBRATIONININCHES);
   RotatedRect leftRectangle;
   RotatedRect rightRectangle;

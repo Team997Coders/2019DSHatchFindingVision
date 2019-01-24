@@ -13,8 +13,8 @@ apply plugin: 'com.analog.garage.pygrad'
 
 python {
     sourceDir = "src"
-    // Windows vs linux naming of python versions!
-    pythonExe = "python"
+    // TODO: Windows vs linux naming of python versions!
+    pythonExe = "python3"
 }
 
 build.dependsOn pyenv
