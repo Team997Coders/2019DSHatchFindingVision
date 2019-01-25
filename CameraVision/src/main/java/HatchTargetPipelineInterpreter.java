@@ -5,6 +5,7 @@ import java.util.Iterator;
 
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 import org.opencv.imgproc.Imgproc;
 
@@ -82,7 +83,7 @@ public class HatchTargetPipelineInterpreter {
 	 * @return	An array list of hatch targets.
 	 */
 	public ArrayList<HatchTarget> getHatchTargets() {
-		ArrayList<HatchTarget> hatchTargets= new ArrayList<HatchTarget>();
+		ArrayList<HatchTarget> hatchTargets = new ArrayList<HatchTarget>();
 		ArrayList<RotatedRect> sortedRectangles = getRectanglesByXAscending();
 
 		// Must start with at least 2 rectangles
@@ -115,6 +116,20 @@ public class HatchTargetPipelineInterpreter {
 			}
 		}
 		return hatchTargets;
+	}
+
+	/**
+	 * Return the center points for each found hatch target.
+	 * 
+	 * @return	As array list of points.
+	 */
+	public ArrayList<Point> getHatchTargetCenters() {
+		ArrayList<Point> hatchTargetCenters = new ArrayList<Point>();
+
+		for(HatchTarget hatchTarget : getHatchTargets()) {
+			hatchTargetCenters.add(hatchTarget.center());
+		}
+		return hatchTargetCenters;
 	}
 
 	/**

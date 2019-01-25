@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.Map;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -38,7 +39,7 @@ public class ImageAnnotator {
     inputImage.copyTo(outputImage);
   }
 
-  public Mat completedAnnotate() {
+  public Mat getCompletedAnnotation() {
     return outputImage;
   }
 
@@ -83,6 +84,12 @@ public class ImageAnnotator {
       long distance = Math.round(hatchTarget.rangeInInches() * 10);
       double roundedDistance = ((double)distance)/10;
       Imgproc.putText(outputImage, "d: " + Double.toString(roundedDistance), textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
+    }
+  }
+
+  public void printTargetIdentifiers(Map<String, Point> identifierToPointMap) {
+    for (Map.Entry<String, Point> entry : identifierToPointMap.entrySet()) {
+      Imgproc.putText(outputImage, entry.getKey(), entry.getValue(), Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
     }
   }
 

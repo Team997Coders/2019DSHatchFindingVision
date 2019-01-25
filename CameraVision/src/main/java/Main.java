@@ -107,8 +107,11 @@ public class Main {
     // Get the image annotator
     ImageAnnotator imageAnnotator = new ImageAnnotator(interpreter);
 
-    // Finally get the HUD
-    HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotator);
+    // Get the HUD
+    HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotator, interpreter);
+
+    // Get the state machine
+    HeadsUpDisplayStateMachine stateMachine = new HeadsUpDisplayStateMachine(hud);
 
     // Init these vars outside processing loop, as they are expensive to create.
     Mat inputImage = new Mat();
@@ -126,14 +129,17 @@ public class Main {
         imageProcessor.processAsync(inputImage);
         imagePump.pumpAsync();
 
-        // TODO: async pump for user commands here
+        // TODO: async pump for getting user commands here
 
         // Await image processing to finsh
         imageProcessor.awaitProcessCompletion();
 
-        outputImage = hud.update(inputImage);
+        // TODO: Send user command to HUD if one fetched
 
-        // Write out the image
+        // Update the HUD
+        outputImage = hud.update(inputImage, stateMachine.getState());
+
+        // Write out the HUD image
         imageSource.putFrame(outputImage);
 
         // Get the next image
