@@ -29,8 +29,7 @@ public class ImageProcessorUnitTest
 		// use Mockito to mock a pipeline and network table writer object
 		IHatchTargetPipeline pipelineMock = mock(IHatchTargetPipeline.class);
 		INetworkTableWriter networkTableWriterMock = mock(INetworkTableWriter.class);
-		ImageAnnotator imageAnnotatorMock = mock(ImageAnnotator.class);
-		ImageProcessor imageProcessor = new ImageProcessor(pipelineMock, networkTableWriterMock, imageAnnotatorMock);
+		ImageProcessor imageProcessor = new ImageProcessor(pipelineMock, networkTableWriterMock);
 		Mat emptyImage = new Mat();
 
 		// Act
@@ -52,8 +51,7 @@ public class ImageProcessorUnitTest
 		// use Mockito to mock a pipeline and network table writer object
 		IHatchTargetPipeline pipelineMock = mock(IHatchTargetPipeline.class);
 		INetworkTableWriter networkTableWriterMock = mock(INetworkTableWriter.class);
-		ImageAnnotator imageAnnotatorMock = mock(ImageAnnotator.class);
-		ImageProcessor imageProcessor = new ImageProcessor(pipelineMock, networkTableWriterMock, imageAnnotatorMock);
+		ImageProcessor imageProcessor = new ImageProcessor(pipelineMock, networkTableWriterMock);
 		Mat emptyImage = new Mat();
 
 		// Act

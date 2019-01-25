@@ -34,19 +34,18 @@ public class ImageAnnotator {
     this.hatchTargetRectangleColor = new Scalar(255, 51, 0);    // blue
   }
 
-  public Mat annotate(Mat inputImage) {
+  public void beginAnnotation(Mat inputImage) {
     inputImage.copyTo(outputImage);
-    drawTargetingRectangles();
-    drawHatchTargetRectangles();
-    printDistanceToHatchTargetInInches();
-//    printWidthOfRectangles();
+  }
+
+  public Mat completedAnnotate() {
     return outputImage;
   }
 
   /**
    * Draw rectangles for all targeting tape found.
    */
-  private void drawTargetingRectangles() {
+  public void drawTargetingRectangles() {
     // Draw best-fit rectangles around targets
     for (RotatedRect rotatedRect: interpreter.getRectangles()) {
       drawRotatedRect(rotatedRect, targetingRectangleColor, 4);
@@ -56,13 +55,13 @@ public class ImageAnnotator {
   /**
    * Draw rectangles for identified hatch targets.
    */
-  private void drawHatchTargetRectangles() {
+  public void drawHatchTargetRectangles() {
     for (HatchTarget hatchTarget: interpreter.getHatchTargets()) {
       drawRotatedRect(hatchTarget.targetRectangle(), hatchTargetRectangleColor, 4);
     }
   }
 
-  private void printWidthOfRectangles() {
+  public void printWidthOfRectangles() {
     for (RotatedRect rotatedRect: interpreter.getRectangles()) {
       Point[] vertices = new Point[4];
       rotatedRect.points(vertices);
@@ -74,7 +73,7 @@ public class ImageAnnotator {
     }
   }
 
-  private void printDistanceToHatchTargetInInches() {
+  public void printDistanceToHatchTargetInInches() {
     for (HatchTarget hatchTarget: interpreter.getHatchTargets()) {
       Point[] vertices = new Point[4];
       RotatedRect rotatedRect = hatchTarget.targetRectangle();

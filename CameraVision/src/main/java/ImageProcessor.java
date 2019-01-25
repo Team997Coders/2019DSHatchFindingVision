@@ -9,9 +9,8 @@ import java.util.concurrent.*;
 public class ImageProcessor {
   private IHatchTargetPipeline pipeline;
   private INetworkTableWriter networkTableWriter;
-  private ImageAnnotator imageAnnotator;
   private ExecutorService executor = Executors.newSingleThreadExecutor();
-  private Future<Mat> processAsyncFuture;
+  private Future<?> processAsyncFuture;
 
   /**
    * ImageProcessor requires a pipeline to process and a network table writer to write
@@ -20,14 +19,12 @@ public class ImageProcessor {
    * @param networkTableWriter    A network table writer to send results to
    */
   public ImageProcessor(IHatchTargetPipeline pipeline, 
-      INetworkTableWriter networkTableWriter, 
-      ImageAnnotator imageAnnotator) {
+      INetworkTableWriter networkTableWriter) {
     if (pipeline == null) {
       throw new IllegalArgumentException();
     }
     this.pipeline = pipeline;
     this.networkTableWriter = networkTableWriter;
-    this.imageAnnotator = imageAnnotator;
     this.processAsyncFuture = null;
   }
 
@@ -48,17 +45,16 @@ public class ImageProcessor {
 
       // Update network table
       networkTableWriter.write();
-      return imageAnnotator.annotate(inputImage);
+      return;
     });
   }
 
   /**
    * Await an image process async call to finish.
    */
-  public Mat awaitProcessCompletion() {
-    Mat outputImage = null;
+  public void awaitProcessCompletion() {
     try {
-      outputImage = processAsyncFuture.get();
+      processAsyncFuture.get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
@@ -68,6 +64,6 @@ public class ImageProcessor {
     }
     // Reset our future
     processAsyncFuture = null;
-    return outputImage;
+    return;
   }
 }

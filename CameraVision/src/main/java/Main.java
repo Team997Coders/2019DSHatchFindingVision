@@ -93,8 +93,22 @@ public class Main {
     // Set up the image pump to grab images.
     ImagePump imagePump = new ImagePump(imageSink);
 
-    // Get image processing components.
-    ImageProcessor imageProcessor = HatchTargetImageProcessorFactory.CreateImageProcessor(publishingTable, cameraParameters, pipeline);
+    // Get pipeline interpreter
+    HatchTargetPipelineInterpreter interpreter = new HatchTargetPipelineInterpreter(pipeline, cameraParameters);
+
+    // Get the image processor
+    ImageProcessor imageProcessor = new ImageProcessor(
+      pipeline, 
+      new NetworkTableWriter(
+        interpreter,
+        publishingTable)
+    );
+
+    // Get the image annotator
+    ImageAnnotator imageAnnotator = new ImageAnnotator(interpreter);
+
+    // Finally get the HUD
+    HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotator);
 
     // Init these vars outside processing loop, as they are expensive to create.
     Mat inputImage = new Mat();
@@ -107,13 +121,17 @@ public class Main {
 
     while (!Thread.currentThread().isInterrupted()) {
       if (!inputImage.empty()) {
-        // Process the image looking for targets...concurrently
+        // Process the image concurrently
         // with pumping the frame grabber for the next frame.
         imageProcessor.processAsync(inputImage);
         imagePump.pumpAsync();
 
+        // TODO: async pump for user commands here
+
         // Await image processing to finsh
-        outputImage = imageProcessor.awaitProcessCompletion();
+        imageProcessor.awaitProcessCompletion();
+
+        outputImage = hud.update(inputImage);
 
         // Write out the image
         imageSource.putFrame(outputImage);
