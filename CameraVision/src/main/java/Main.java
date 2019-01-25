@@ -2,6 +2,10 @@ import edu.wpi.cscore.*;
 import edu.wpi.cscore.HttpCamera.HttpCameraKind;
 import edu.wpi.first.wpilibj.networktables.*;
 import edu.wpi.first.wpilibj.tables.*;
+
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.*;
 import org.opencv.core.*;
 
@@ -113,40 +117,80 @@ public class Main {
     // Get the state machine
     HeadsUpDisplayStateMachine stateMachine = new HeadsUpDisplayStateMachine(hud);
 
-    // Init these vars outside processing loop, as they are expensive to create.
-    Mat inputImage = new Mat();
-    Mat outputImage = new Mat();
+    System.out.println("Opening command port on 2222...");
 
-    System.out.println("Processing stream...");
+    Thread commandProcessorThread = null;
 
-    // Prime the image pump
-    inputImage = imagePump.pump();
+    // Open up a server socket to listen for connections for command input
+    try(ServerSocket serverSocket = new ServerSocket(2222)) {
 
-    while (!Thread.currentThread().isInterrupted()) {
-      if (!inputImage.empty()) {
-        // Process the image concurrently
-        // with pumping the frame grabber for the next frame.
-        imageProcessor.processAsync(inputImage);
-        imagePump.pumpAsync();
+      // Set up command processor on its own thread
+      CommandProcessor commandProcessor = new CommandProcessor(serverSocket, new CommandProcessorValueBuilder());
+      commandProcessorThread = new Thread(commandProcessor);
+      commandProcessorThread.start();
 
-        // TODO: async pump for getting user commands here
+      // Init these vars outside processing loop, as they are expensive to create.
+      Mat inputImage = new Mat();
+      Mat outputImage = new Mat();
 
-        // Await image processing to finsh
-        imageProcessor.awaitProcessCompletion();
+      System.out.println("Processing stream...");
 
-        // TODO: Send user command to HUD if one fetched
+      // Prime the image pump
+      inputImage = imagePump.pump();
 
-        // Update the HUD
-        outputImage = hud.update(inputImage, stateMachine.getState());
+      while (!Thread.currentThread().isInterrupted()) {
+        if (!inputImage.empty()) {
+          // Process the image concurrently
+          // with pumping the frame grabber for the next frame.
+          imageProcessor.processAsync(inputImage);
+          imagePump.pumpAsync();
 
-        // Write out the HUD image
-        imageSource.putFrame(outputImage);
+          // Await image processing to finsh
+          imageProcessor.awaitProcessCompletion();
 
-        // Get the next image
-        inputImage = imagePump.awaitPumpCompletion();
-      } else {
-        // Get the next image, because the prior one was empty
-        inputImage = imagePump.pump();
+          // Fetch a user command and update HUD state machine
+          if (commandProcessor.isCommandAvailable()) {
+            Command command = commandProcessor.getCommand();
+            switch (command.getCommand()) {
+              case 'A':
+                stateMachine.aButtonPressed();
+                break;
+              case 'B':
+                stateMachine.bButtonPressed();
+                break;
+              case 'X':
+                stateMachine.xButtonPressed();
+                break;
+              case 'Y':
+                stateMachine.yButtonPressed();
+                break;
+              default:
+                System.err.println("Command not recognized.");
+            }
+          }
+
+          // Update the HUD
+          try {
+            outputImage = hud.update(inputImage, stateMachine.getState());
+            // Write out the HUD image
+            imageSource.putFrame(outputImage);
+          } catch (HeadsUpDisplay.FailedToLock ftl) {
+            stateMachine.failedToLock();
+          }
+
+          // Get the next image
+          inputImage = imagePump.awaitPumpCompletion();
+        } else {
+          // Get the next image, because the prior one was empty
+          inputImage = imagePump.pump();
+        }
+      }
+    } catch (Exception e) {
+      System.err.println(e);
+      return;
+    } finally {
+      if (commandProcessorThread != null) {
+        commandProcessorThread.interrupt();
       }
     }
   }

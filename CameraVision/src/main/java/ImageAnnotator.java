@@ -19,6 +19,7 @@ public class ImageAnnotator {
   private Mat outputImage;
   private final Scalar targetingRectangleColor;
   private final Scalar hatchTargetRectangleColor;
+  private final Scalar hatchTargetSlewingColor;
 
   /**
    * Construct an annotator with an instantiated interpreter.
@@ -33,6 +34,24 @@ public class ImageAnnotator {
     this.outputImage = new Mat();
     this.targetingRectangleColor = new Scalar(81, 190, 0);      // green
     this.hatchTargetRectangleColor = new Scalar(255, 51, 0);    // blue
+    this.hatchTargetSlewingColor = new Scalar(0, 51, 255);      // red
+  }
+
+  /**
+   * Custom exception to indicate that a target is not expected
+   * where it should be.
+   */
+  public class TargetNotFoundException extends Exception {
+    public TargetNotFoundException () {}
+    public TargetNotFoundException (String message) {
+      super (message);
+    }
+    public TargetNotFoundException (Throwable cause) {
+      super (cause);
+    }
+    public TargetNotFoundException (String message, Throwable cause) {
+      super (message, cause);
+    }
   }
 
   public void beginAnnotation(Mat inputImage) {
@@ -85,6 +104,19 @@ public class ImageAnnotator {
       double roundedDistance = ((double)distance)/10;
       Imgproc.putText(outputImage, "d: " + Double.toString(roundedDistance), textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
     }
+  }
+
+  public void drawSlewingRectangle(Point slewPoint) throws TargetNotFoundException {
+    for (HatchTarget hatchTarget: interpreter.getHatchTargets()) {
+      if (hatchTarget.targetRectangle().boundingRect().contains(slewPoint)) {
+        drawRotatedRect(hatchTarget.targetRectangle(), hatchTargetSlewingColor, 4);
+        Point textStart = hatchTarget.center();
+        textStart.x -= 30;
+        Imgproc.putText(outputImage, "A=cancel", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
+        return;
+      }
+    }
+    throw new TargetNotFoundException("No hatch target found containing point.");
   }
 
   public void printTargetIdentifiers(Map<String, Point> identifierToPointMap) {

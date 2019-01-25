@@ -29,7 +29,24 @@ public class HeadsUpDisplay {
     mapButtonsToIdentifiers();
   }
 
-  public Mat update(Mat inputImage, HeadsUpDisplayStateMachine.State currentState) {
+    /**
+   * Custom exception to indicate that a target is not expected
+   * where it should be.
+   */
+  public class FailedToLock extends Exception {
+    public FailedToLock () {}
+    public FailedToLock (String message) {
+      super (message);
+    }
+    public FailedToLock (Throwable cause) {
+      super (cause);
+    }
+    public FailedToLock (String message, Throwable cause) {
+      super (message, cause);
+    }
+  }
+
+  public Mat update(Mat inputImage, HeadsUpDisplayStateMachine.State currentState) throws FailedToLock {
     imageAnnotator.beginAnnotation(inputImage);
     if (currentState == HeadsUpDisplayStateMachine.State.IdentifyingTargets) {
       imageAnnotator.drawTargetingRectangles();
@@ -37,6 +54,12 @@ public class HeadsUpDisplay {
       imageAnnotator.printDistanceToHatchTargetInInches();
       mapButtonsToTargetCenterPoints(interpreter.getHatchTargetCenters());
       imageAnnotator.printTargetIdentifiers(identifierToPointMap);
+    } else if (currentState == HeadsUpDisplayStateMachine.State.SlewingToTarget) {
+      try {
+        imageAnnotator.drawSlewingRectangle(slewPoint);
+      } catch (ImageAnnotator.TargetNotFoundException e) {
+        throw new FailedToLock();
+      }
     }
     return imageAnnotator.getCompletedAnnotation();
   }
@@ -81,5 +104,9 @@ public class HeadsUpDisplay {
 
   public void setSlewPoint(HeadsUpDisplayStateMachine.Trigger trigger) {
     slewPoint = buttonToPointMap.get(trigger);
+  }
+
+  public boolean isSlewPointDefined(HeadsUpDisplayStateMachine.Trigger trigger) {
+    return buttonToPointMap.get(trigger) != null;
   }
 }

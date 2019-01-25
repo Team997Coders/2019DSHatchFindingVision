@@ -1,8 +1,11 @@
 import com.github.oxo42.stateless4j.StateMachine;
+import com.github.oxo42.stateless4j.StateConfiguration;
 import com.github.oxo42.stateless4j.StateMachineConfig;
 import com.github.oxo42.stateless4j.delegates.Action1;
+import com.github.oxo42.stateless4j.delegates.FuncBoolean;
 import com.github.oxo42.stateless4j.transitions.Transition;
 
+// TODO: Should this simply extend from StateMachine?
 public class HeadsUpDisplayStateMachine {
   private final StateMachine<State, Trigger> stateMachine;
 
@@ -17,19 +20,69 @@ public class HeadsUpDisplayStateMachine {
   private static StateMachineConfig<State, Trigger> GetConfig(HeadsUpDisplay hud) {
     StateMachineConfig<State, Trigger> config = new StateMachineConfig<>();
 
+    // It would be super nice to use the permitIfOtherwiseIgnore function,
+    // but alas it is not available in a release version.
     config.configure(State.IdentifyingTargets)
+      .permitIf(Trigger.AButton, State.SlewingToTarget, new FuncBoolean() {
+        @Override
+        public boolean call() {
+          return hud.isSlewPointDefined(Trigger.AButton);
+        }
+      })
+      .permitIf(Trigger.BButton, State.SlewingToTarget, new FuncBoolean() {
+        @Override
+        public boolean call() {
+          return hud.isSlewPointDefined(Trigger.BButton);
+        }
+      })
+      .permitIf(Trigger.XButton, State.SlewingToTarget, new FuncBoolean() {
+        @Override
+        public boolean call() {
+          return hud.isSlewPointDefined(Trigger.XButton);
+        }
+      })
+      .permitIf(Trigger.YButton, State.SlewingToTarget, new FuncBoolean() {
+        @Override
+        public boolean call() {
+          return hud.isSlewPointDefined(Trigger.YButton);
+        }
+      })
+      .ignoreIf(Trigger.AButton, new FuncBoolean() {
+        @Override
+        public boolean call() {
+          return !hud.isSlewPointDefined(Trigger.AButton);
+        }
+      })
+      .ignoreIf(Trigger.BButton, new FuncBoolean() {
+        @Override
+        public boolean call() {
+          return !hud.isSlewPointDefined(Trigger.BButton);
+        }
+      })
+      .ignoreIf(Trigger.XButton, new FuncBoolean() {
+        @Override
+        public boolean call() {
+          return !hud.isSlewPointDefined(Trigger.XButton);
+        }
+      })
+      .ignoreIf(Trigger.YButton, new FuncBoolean() {
+        @Override
+        public boolean call() {
+          return !hud.isSlewPointDefined(Trigger.YButton);
+        }
+      });
+    
+    config.configure(State.SlewingToTarget)
       .onEntry(new Action1<Transition<State,Trigger>>() {
         public void doIt(Transition<State, Trigger> transition) {
           hud.setSlewPoint(transition.getTrigger());
       }})
-      .permit(Trigger.AButton, State.SlewingToTarget)     // should probably be permit ifs only if target is available
-      .permit(Trigger.BButton, State.SlewingToTarget)
-      .permit(Trigger.XButton, State.SlewingToTarget)
-      .permit(Trigger.YButton, State.SlewingToTarget);
-    
-    config.configure(State.SlewingToTarget)
       .permit(Trigger.LockOn, State.TargetLocked)
-      .permit(Trigger.FailedToLock, State.LockFailed);
+      .permit(Trigger.FailedToLock, State.LockFailed)
+      .permit(Trigger.AButton, State.IdentifyingTargets)
+      .ignore(Trigger.BButton)
+      .ignore(Trigger.XButton)
+      .ignore(Trigger.YButton);
 
     config.configure(State.TargetLocked)
       .permit(Trigger.AButton, State.DrivingToTarget)
@@ -70,6 +123,10 @@ public class HeadsUpDisplayStateMachine {
 
   public State getState() {
     return stateMachine.getState();
+  }
+
+  public void failedToLock() {
+    stateMachine.fire(Trigger.FailedToLock);
   }
 
   public enum State {
