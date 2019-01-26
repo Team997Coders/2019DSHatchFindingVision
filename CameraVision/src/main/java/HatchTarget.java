@@ -21,18 +21,19 @@ public class HatchTarget {
    * Custom exception to indicate an invalid set of rotation
    * angles for the containing rectangles within a hatch target.
    */
-  public class TargetRectanglesAngleException extends Exception {
-    public TargetRectanglesAngleException () {}
-    public TargetRectanglesAngleException (String message) {
+  public class TargetRectanglesException extends Exception {
+    public TargetRectanglesException () {}
+    public TargetRectanglesException (String message) {
       super (message);
     }
-    public TargetRectanglesAngleException (Throwable cause) {
+    public TargetRectanglesException (Throwable cause) {
       super (cause);
     }
-    public TargetRectanglesAngleException (String message, Throwable cause) {
+    public TargetRectanglesException (String message, Throwable cause) {
       super (message, cause);
     }
   }
+
 
   /**
    * Construct a hatch target given the interior targeting rectangles.
@@ -43,41 +44,41 @@ public class HatchTarget {
    */
   public HatchTarget(RotatedRect leftRectangle, 
       RotatedRect rightRectangle,
-      CameraParameters cameraParameters) throws TargetRectanglesAngleException {
+      CameraParameters cameraParameters) throws TargetRectanglesException {
     this.leftRectangle = leftRectangle;
     this.rightRectangle = rightRectangle;
     this.cameraParameters = cameraParameters;
-    validateTargetRectanglesRotationAngles();
+    validateTargetRectangles();
   }
 
   /**
    * Check that the rectangles are pointing at each other on top
-   * of the target. Throw an exception otherwise.
+   * of the target, and if they are close enough to be a valid target. Throw an exception otherwise.
    * To learn how opencv determines this magic:
    * 
    * @see https://namkeenman.wordpress.com/2015/12/18/open-cv-determine-angle-of-rotatedrect-minarearect/
 
-   * @throws TargetRectanglesAngleException   Exception thrown if rectangle angles are not valid.
+   * @throws TargetRectanglesException   Exception thrown if rectangle angles or width is not valid.
    */
-  private void validateTargetRectanglesRotationAngles() throws TargetRectanglesAngleException {
+  private void validateTargetRectangles() throws TargetRectanglesException {
     // The point of the 0th vertex (which is the lowest point, also the greatest y value)
     // is the pivot point. RotatedRect angle measures, going counterclockwise, the angle formed
     // by horizontal and the right hand size of the vertex connected to the point. And oh yeah,
     // the angle gets more negative until reaching -90 degrees.
     if (leftRectangle.angle == -0 || leftRectangle.angle == -90 || rightRectangle.angle == -0 || rightRectangle.angle == -90) {
-      throw new TargetRectanglesAngleException("Rectangles are not tilted.");
+      throw new TargetRectanglesException("Rectangles are not tilted.");
     }
     // The left-hand rectangle angle should be MORE negative than the right
     // And add a comfortable offset so that we don't pick up two lefts where
     // the left-left is slightly more tilted than the right-left.
     if ((leftRectangle.angle + 30) > rightRectangle.angle) {
-      throw new TargetRectanglesAngleException("Target rectangles are not tilted inward.");
+      throw new TargetRectanglesException("Target rectangles are not tilted inward.");
     }
-
-		//TODO: The edge case where two targets each have their inner rectangles
-		// obscured will still cause the outer rectangles to be mistakenly
-		// identified as a target. Some distance threshold should be checked.
-    // TODO: throw another error here
+    
+    // The distance between centers when the camera is perpendicular should be ~11.4 inches.
+    if (widthInInches() > 14) {
+      throw new TargetRectanglesException("Target rectangles are too far apart.");
+    }
   }
 
   public Point center() {
@@ -98,6 +99,22 @@ public class HatchTarget {
     // width since we know all the tape width is 2 inches.
     // d = Tin*FOVpixel/(2*Tpixel*tanΘ)
     return (HATCHTARGETWIDTHININCHES * cameraParameters.getFOVPixelWidth()) / (2 * width * cameraParameters.getTanTheta());
+  }
+
+  /**
+   * Ratio of known width of tape to visible pixels. Multiply pixel values by this to convert them to inches.
+   * @return conversion factor for pixels to inches
+   */
+  public double pxToInchesConversion() {
+    return (2 / leftRectangle.size.width); //TODO make this be a function based on x-position
+  }
+
+  /**
+   * Returns the width between the two target rectangle's centers.
+   * @return width between target's centers. 
+   */
+  public double widthInInches() {
+    return (Math.abs(leftRectangle.center.x - rightRectangle.center.x) * pxToInchesConversion());
   }
 
   /**
