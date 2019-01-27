@@ -123,7 +123,7 @@ public class HatchTargetPipelineInterpreter {
 					if (iterator.hasNext()) {
 						leftRectangle = iterator.next();
 					}
-				} catch (HatchTarget.TargetRectanglesAngleException e) {
+				} catch (HatchTarget.TargetRectanglesException e) {
 					// It did not work, so move over one rectangle so we can try again
 					leftRectangle = rightRectangle;
 					// Start again from the top of loop

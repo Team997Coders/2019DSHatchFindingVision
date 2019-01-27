@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Point;
+import org.opencv.core.Point3;
 
 /**
  * Encapsulate those characteristics specific to a hatch target, given
@@ -21,18 +22,19 @@ public class HatchTarget {
    * Custom exception to indicate an invalid set of rotation
    * angles for the containing rectangles within a hatch target.
    */
-  public class TargetRectanglesAngleException extends Exception {
-    public TargetRectanglesAngleException () {}
-    public TargetRectanglesAngleException (String message) {
+  public class TargetRectanglesException extends Exception {
+    public TargetRectanglesException () {}
+    public TargetRectanglesException (String message) {
       super (message);
     }
-    public TargetRectanglesAngleException (Throwable cause) {
+    public TargetRectanglesException (Throwable cause) {
       super (cause);
     }
-    public TargetRectanglesAngleException (String message, Throwable cause) {
+    public TargetRectanglesException (String message, Throwable cause) {
       super (message, cause);
     }
   }
+
 
   /**
    * Construct a hatch target given the interior targeting rectangles.
@@ -43,41 +45,41 @@ public class HatchTarget {
    */
   public HatchTarget(RotatedRect leftRectangle, 
       RotatedRect rightRectangle,
-      CameraParameters cameraParameters) throws TargetRectanglesAngleException {
+      CameraParameters cameraParameters) throws TargetRectanglesException {
     this.leftRectangle = leftRectangle;
     this.rightRectangle = rightRectangle;
     this.cameraParameters = cameraParameters;
-    validateTargetRectanglesRotationAngles();
+    validateTargetRectangles();
   }
 
   /**
    * Check that the rectangles are pointing at each other on top
-   * of the target. Throw an exception otherwise.
+   * of the target, and if they are close enough to be a valid target. Throw an exception otherwise.
    * To learn how opencv determines this magic:
    * 
    * @see https://namkeenman.wordpress.com/2015/12/18/open-cv-determine-angle-of-rotatedrect-minarearect/
 
-   * @throws TargetRectanglesAngleException   Exception thrown if rectangle angles are not valid.
+   * @throws TargetRectanglesException   Exception thrown if rectangle angles or width is not valid.
    */
-  private void validateTargetRectanglesRotationAngles() throws TargetRectanglesAngleException {
+  private void validateTargetRectangles() throws TargetRectanglesException {
     // The point of the 0th vertex (which is the lowest point, also the greatest y value)
     // is the pivot point. RotatedRect angle measures, going counterclockwise, the angle formed
     // by horizontal and the right hand size of the vertex connected to the point. And oh yeah,
     // the angle gets more negative until reaching -90 degrees.
     if (leftRectangle.angle == -0 || leftRectangle.angle == -90 || rightRectangle.angle == -0 || rightRectangle.angle == -90) {
-      throw new TargetRectanglesAngleException("Rectangles are not tilted.");
+      throw new TargetRectanglesException("Rectangles are not tilted.");
     }
     // The left-hand rectangle angle should be MORE negative than the right
     // And add a comfortable offset so that we don't pick up two lefts where
     // the left-left is slightly more tilted than the right-left.
     if ((leftRectangle.angle + 30) > rightRectangle.angle) {
-      throw new TargetRectanglesAngleException("Target rectangles are not tilted inward.");
+      throw new TargetRectanglesException("Target rectangles are not tilted inward.");
     }
-
-		//TODO: The edge case where two targets each have their inner rectangles
-		// obscured will still cause the outer rectangles to be mistakenly
-		// identified as a target. Some distance threshold should be checked.
-    // TODO: throw another error here
+    
+    // The distance between centers when the camera is perpendicular should be ~11.4 inches.
+    if ((widthInPx() * pxToInchesConversion(center().x)) > 15) {
+      throw new TargetRectanglesException("Target rectangles are too far apart.");
+    }
   }
 
   public Point center() {
@@ -92,12 +94,38 @@ public class HatchTarget {
   public double rangeInInches() {
     RotatedRect rect = targetRectangle();
     double width = rect.size.width > rect.size.height ? rect.size.width : rect.size.height;
-    // TODO: This does not compensate for an off axis target...only a target on a plane 90 degrees from camera.
     // One idea is to compare the widths of the interior rectangles...the degree of difference should tells us
     // something about the angle. We are using the hatch target width below but could use a normalized tape
     // width since we know all the tape width is 2 inches.
     // d = Tin*FOVpixel/(2*Tpixel*tanΘ)
-    return (HATCHTARGETWIDTHININCHES * cameraParameters.getFOVPixelWidth()) / (2 * width * cameraParameters.getTanTheta());
+
+    //old method, only worked for perpendicular cases.
+    //return (HATCHTARGETWIDTHININCHES * cameraParameters.getFOVPixelWidth()) / (2 * width * cameraParameters.getTanTheta());
+
+    return ( (((cameraParameters.getFOVPixelWidth() / 2) * pxToInchesConversion(center().x)) * cameraParameters.getRangeCalibrationInInches()) / cameraParameters.getFOVCalibrationInInches() );
+  }
+
+  /**
+   * Returns the width of an area in inches, based on the width in pixels and a center point.
+   * Should work for both perpendicular and angled vison.
+   * @param centerPos Position of target area. (px)
+   * @return Conversion for px to inches at target area. Multiply by a pixel distance. 
+   */
+  public double pxToInchesConversion(double centerPos) {
+    //return (2 / leftRectangle.size.width); This method only works for a perpendicular view
+
+    //centerPos should be in the center of your thing you want to measure, so that the difference in width
+    //due to view averages out.
+    double pxIn2Inches = ( (((rightRectangle.size.width - leftRectangle.size.width) / (widthInPx())) * (centerPos - leftRectangle.center.x)) + leftRectangle.size.width);
+    return (2 / pxIn2Inches);
+  }
+
+  /**
+   * Returns the width between the two target rectangle's centers.
+   * @return width between target's centers. (px) 
+   */
+  public double widthInPx() {
+    return (Math.abs(leftRectangle.center.x - rightRectangle.center.x));
   }
 
   /**
