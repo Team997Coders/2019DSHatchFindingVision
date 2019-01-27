@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Point;
+import org.opencv.core.Point3;
 
 /**
  * Encapsulate those characteristics specific to a hatch target, given
@@ -76,7 +77,7 @@ public class HatchTarget {
     }
     
     // The distance between centers when the camera is perpendicular should be ~11.4 inches.
-    if (widthInInches() > 14) {
+    if ((widthInPx() * pxToInchesConversion(center().x)) > 15) {
       throw new TargetRectanglesException("Target rectangles are too far apart.");
     }
   }
@@ -93,28 +94,38 @@ public class HatchTarget {
   public double rangeInInches() {
     RotatedRect rect = targetRectangle();
     double width = rect.size.width > rect.size.height ? rect.size.width : rect.size.height;
-    // TODO: This does not compensate for an off axis target...only a target on a plane 90 degrees from camera.
     // One idea is to compare the widths of the interior rectangles...the degree of difference should tells us
     // something about the angle. We are using the hatch target width below but could use a normalized tape
     // width since we know all the tape width is 2 inches.
     // d = Tin*FOVpixel/(2*Tpixel*tanΘ)
-    return (HATCHTARGETWIDTHININCHES * cameraParameters.getFOVPixelWidth()) / (2 * width * cameraParameters.getTanTheta());
+
+    //old method, only worked for perpendicular cases.
+    //return (HATCHTARGETWIDTHININCHES * cameraParameters.getFOVPixelWidth()) / (2 * width * cameraParameters.getTanTheta());
+
+    return ( (((cameraParameters.getFOVPixelWidth() / 2) * pxToInchesConversion(center().x)) * cameraParameters.getRangeCalibrationInInches()) / cameraParameters.getFOVCalibrationInInches() );
   }
 
   /**
-   * Ratio of known width of tape to visible pixels. Multiply pixel values by this to convert them to inches.
-   * @return conversion factor for pixels to inches
+   * Returns the width of an area in inches, based on the width in pixels and a center point.
+   * Should work for both perpendicular and angled vison.
+   * @param centerPos Position of target area. (px)
+   * @return Conversion for px to inches at target area. Multiply by a pixel distance. 
    */
-  public double pxToInchesConversion() {
-    return (2 / leftRectangle.size.width); //TODO make this be a function based on x-position
+  public double pxToInchesConversion(double centerPos) {
+    //return (2 / leftRectangle.size.width); This method only works for a perpendicular view
+
+    //centerPos should be in the center of your thing you want to measure, so that the difference in width
+    //due to view averages out.
+    double pxIn2Inches = ( (((rightRectangle.size.width - leftRectangle.size.width) / (widthInPx())) * (centerPos - leftRectangle.center.x)) + leftRectangle.size.width);
+    return (2 / pxIn2Inches);
   }
 
   /**
    * Returns the width between the two target rectangle's centers.
-   * @return width between target's centers. 
+   * @return width between target's centers. (px) 
    */
-  public double widthInInches() {
-    return (Math.abs(leftRectangle.center.x - rightRectangle.center.x) * pxToInchesConversion());
+  public double widthInPx() {
+    return (Math.abs(leftRectangle.center.x - rightRectangle.center.x));
   }
 
   /**
