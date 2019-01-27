@@ -74,7 +74,7 @@ public class HeadsUpDisplay implements Closeable {
    * @return  True if positioning available.
    */
   private boolean positioningCamera() {
-    return panTilt != null;
+    return (panTilt != null);
   }
 
   /**
@@ -94,29 +94,70 @@ public class HeadsUpDisplay implements Closeable {
    * @return              Return the annotated image.
    * @throws FailedToLock Thrown if target failed to lock on.
    */
-  public Mat update(Mat inputImage, HeadsUpDisplayStateMachine.State currentState) throws
+  public Mat update(Mat inputImage, HeadsUpDisplayStateMachine stateMachine) throws
       FailedToLock,
       MiniPanTiltTeensy.CommunicationClosedException,
       MiniPanTiltTeensy.TeensyCommunicationErrorException,
       MiniPanTiltTeensy.TeensyCommunicationFailureException {
     imageAnnotator.beginAnnotation(inputImage);
-    if (currentState == HeadsUpDisplayStateMachine.State.IdentifyingTargets) {
+
+    if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.IdentifyingTargets) {
       imageAnnotator.drawTargetingRectangles();
       imageAnnotator.drawHatchTargetRectangles();
       imageAnnotator.printDistanceToHatchTargetInInches();
+      // This is how we associate hatch targets to buttons
       mapButtonsToTargetCenterPoints(interpreter.getHatchTargetCenters());
+      // Print the button identifiers on the hatch targets
       imageAnnotator.printTargetIdentifiers(identifierToPointMap);
-    } else if (currentState == HeadsUpDisplayStateMachine.State.SlewingToTarget) {
+    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.SlewingToTarget) {
       try {
+        // Update the known center of the selected target from the last known point
+        HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
+        slewPoint = hatchTarget.targetRectangle().center;
+        // Draw the targeting rectangle being slewed
         imageAnnotator.drawSlewingRectangle(slewPoint);
+        // Continuing slewing camera to get selected target in center of FOV
         slewTargetToCenter();
       } catch (TargetNotFoundException e) {
+        // We can no longer find a target containing our selected target point.
         throw new FailedToLock();
       }
+    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.Panning) {
+      imageAnnotator.drawTargetingRectangles();
+      imageAnnotator.drawHatchTargetRectangles();
+      pan(stateMachine.getPanPct());
+      if (stateMachine.getPanPct() == 0) {
+        stateMachine.identifyTargets();
+      }
+    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.Tilting) {
+      imageAnnotator.drawTargetingRectangles();
+      imageAnnotator.drawHatchTargetRectangles();
+      tilt(stateMachine.getTiltPct());
+      if (stateMachine.getTiltPct() == 0) {
+        stateMachine.identifyTargets();
+      }
+    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.Centering) {
+      imageAnnotator.drawTargetingRectangles();
+      imageAnnotator.drawHatchTargetRectangles();
+      center();
+      stateMachine.identifyTargets();
+    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.LockFailed) {
+      // TODO: Give visual indication to user that lock failed
+      // Print something to the screen for 1-2 seconds
+      stateMachine.identifyTargets();
     }
+
     return imageAnnotator.getCompletedAnnotation();
   }
 
+  /**
+   * Slew HUD camera to center selected target within the FOV.
+   * 
+   * @throws MiniPanTiltTeensy.CommunicationClosedException
+   * @throws MiniPanTiltTeensy.TeensyCommunicationErrorException
+   * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
+   * @throws TargetNotFoundException
+   */
   public void slewTargetToCenter() throws
       MiniPanTiltTeensy.CommunicationClosedException,
       MiniPanTiltTeensy.TeensyCommunicationErrorException,
@@ -126,10 +167,89 @@ public class HeadsUpDisplay implements Closeable {
       Point normalizedPoint = interpreter.getNormalizedTargetPositionFromCenter(slewPoint);
       int panPct = (int)Math.round(pidX.getOutput(normalizedPoint.x) * 100);
       int tiltPct = (int)Math.round(pidY.getOutput(normalizedPoint.y) * 100);
+      System.out.println(String.format("normalizedPoint.x=%.2f; normalizedPoint.y=%.2f panPct=%d; tiltPct=%d", normalizedPoint.x, normalizedPoint.y, panPct, tiltPct));
       panTilt.slew(panPct, tiltPct);
     }
   }
 
+  /**
+   * Slew the HUD camera based on percentage of maximum slew rate.
+   * 
+   * @param panPct    Integer from -100 to 100 indicating pan slew rate as a percentage.
+   * @param tiltPct   Integer from -100 to 100 indicating tilt slew rate as a percentage.
+   * 
+   * @throws MiniPanTiltTeensy.CommunicationClosedException
+   * @throws MiniPanTiltTeensy.TeensyCommunicationErrorException
+   * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
+   */
+  public void slew(int panPct, int tiltPct) throws
+      MiniPanTiltTeensy.CommunicationClosedException,
+      MiniPanTiltTeensy.TeensyCommunicationErrorException,
+      MiniPanTiltTeensy.TeensyCommunicationFailureException {
+    if (positioningCamera()) {
+      panTilt.slew(panPct, tiltPct);
+    }
+  }
+
+  /**
+   * Pan the HUD camera based on percentage of maximum pan rate.
+   * 
+   * @param panPct    Integer from -100 to 100 indicating pan slew rate as a percentage.
+   * 
+   * @throws MiniPanTiltTeensy.CommunicationClosedException
+   * @throws MiniPanTiltTeensy.TeensyCommunicationErrorException
+   * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
+   */
+  public void pan(int panPct) throws
+      MiniPanTiltTeensy.CommunicationClosedException,
+      MiniPanTiltTeensy.TeensyCommunicationErrorException,
+      MiniPanTiltTeensy.TeensyCommunicationFailureException {
+    if (positioningCamera()) {
+      panTilt.pan(panPct);
+    }
+  }
+
+  /**
+   * Tilt the HUD camera based on percentage of maximum tilt rate.
+   * 
+   * @param tiltPct    Integer from -100 to 100 indicating tilt slew rate as a percentage.
+   * 
+   * @throws MiniPanTiltTeensy.CommunicationClosedException
+   * @throws MiniPanTiltTeensy.TeensyCommunicationErrorException
+   * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
+   */
+  public void tilt(int tiltPct) throws
+      MiniPanTiltTeensy.CommunicationClosedException,
+      MiniPanTiltTeensy.TeensyCommunicationErrorException,
+      MiniPanTiltTeensy.TeensyCommunicationFailureException {
+    if (positioningCamera()) {
+      panTilt.tilt(tiltPct);
+    }
+  }
+
+  /**
+   * Slew the HUD camera to the mount's center position.
+   * 
+   * @throws MiniPanTiltTeensy.CommunicationClosedException
+   * @throws MiniPanTiltTeensy.TeensyCommunicationErrorException
+   * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
+   */
+  public void center() throws
+      MiniPanTiltTeensy.CommunicationClosedException,
+      MiniPanTiltTeensy.TeensyCommunicationErrorException,
+      MiniPanTiltTeensy.TeensyCommunicationFailureException {
+    if (positioningCamera()) {
+      panTilt.center();
+    }
+  }
+
+  /**
+   * Convenience method to stop slewing the HUD camera.
+   * 
+   * @throws MiniPanTiltTeensy.CommunicationClosedException
+   * @throws MiniPanTiltTeensy.TeensyCommunicationErrorException
+   * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
+   */
   public void stopSlewing() throws 
       MiniPanTiltTeensy.CommunicationClosedException,
       MiniPanTiltTeensy.TeensyCommunicationErrorException,

@@ -90,16 +90,11 @@ public class ImageAnnotator {
   }
 
   public void drawSlewingRectangle(Point slewPoint) throws TargetNotFoundException {
-    for (HatchTarget hatchTarget: interpreter.getHatchTargets()) {
-      if (hatchTarget.targetRectangle().boundingRect().contains(slewPoint)) {
-        drawRotatedRect(hatchTarget.targetRectangle(), hatchTargetSlewingColor, 4);
-        Point textStart = hatchTarget.center();
-        textStart.x -= 30;
-        Imgproc.putText(outputImage, "A=cancel", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
-        return;
-      }
-    }
-    throw new TargetNotFoundException("No hatch target found containing point.");
+    HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
+    drawRotatedRect(hatchTarget.targetRectangle(), hatchTargetSlewingColor, 4);
+    Point textStart = hatchTarget.center();
+    textStart.x -= 30;
+    Imgproc.putText(outputImage, "A=cancel", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
   }
 
   public void printTargetIdentifiers(Map<String, Point> identifierToPointMap) {

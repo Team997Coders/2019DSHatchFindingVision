@@ -1,4 +1,5 @@
-﻿using DirectShowLib;
+﻿using System;
+using DirectShowLib;
 using System.Linq;
 
 // On Windows, do a `dotnet run` on this project to turn off auto-focus on a LifeCam 5000 USB camera.
@@ -45,6 +46,7 @@ namespace FocusUF
 					// If the camera was not in manual focus mode, lock it into manual at the current focus setting
 					if (cameraControlFlags != CameraControlFlags.Manual)
 					{
+						Console.Write("Setting manual focus");
 						_camera.Set(CameraControlProperty.Focus, cameraControlValue, CameraControlFlags.Manual);
 					}
 
@@ -52,10 +54,11 @@ namespace FocusUF
 					_camera.Get(CameraControlProperty.Exposure, out cameraControlValue, out cameraControlFlags);
 					
 					// If the camera was not in manual focus mode, lock it into manual at the current focus setting
-					if (cameraControlFlags != CameraControlFlags.Manual)
-					{
-						_camera.Set(CameraControlProperty.Exposure, -30, CameraControlFlags.Manual);
-					}
+//					if (cameraControlFlags != CameraControlFlags.Manual)
+//					{
+						Console.Write("Changing exposure");
+						_camera.Set(CameraControlProperty.Exposure, -8, CameraControlFlags.Manual);
+//					}
 				}
 			}
 		}

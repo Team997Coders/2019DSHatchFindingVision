@@ -7,7 +7,7 @@ public class CommandProcessorValueBuilder {
   private boolean negation = false;
 
   public double getValue() {
-    return negation ? percentage * -1 / 100.0 : percentage / 100.0;
+    return negation ? percentage * -1  : percentage;
   }
 
   public void setPositive() {

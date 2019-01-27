@@ -112,7 +112,7 @@ public class Main {
     // Get the HUD
     MiniPanTiltTeensy panTilt = null;
     try {panTilt = new MiniPanTiltTeensy();} catch(Exception e){}
-    HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotator, interpreter, new MiniPID(.3, .01, .01), new MiniPID(.3, .01, .01), panTilt);
+    HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotator, interpreter, new MiniPID(.2, 0, 0), new MiniPID(.2, 0, 0), panTilt);
 
     // Get the state machine
     HeadsUpDisplayStateMachine stateMachine = new HeadsUpDisplayStateMachine(hud);
@@ -164,6 +164,17 @@ public class Main {
               case 'Y':
                 stateMachine.yButtonPressed();
                 break;
+              case 'p':
+                int panPct = (int)command.getValue();
+                stateMachine.pan(panPct);
+                break;
+              case 't':
+                int tiltPct = (int)command.getValue();
+                stateMachine.tilt(tiltPct);
+                break;
+              case 'c':
+                stateMachine.center();
+                break;
               default:
                 System.err.println("Command not recognized.");
             }
@@ -171,7 +182,7 @@ public class Main {
 
           // Update the HUD
           try {
-            outputImage = hud.update(inputImage, stateMachine.getState());
+            outputImage = hud.update(inputImage, stateMachine);
             // Write out the HUD image
             imageSource.putFrame(outputImage);
           } catch (HeadsUpDisplay.FailedToLock ftl) {

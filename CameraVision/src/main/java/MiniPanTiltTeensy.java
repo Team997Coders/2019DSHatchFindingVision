@@ -131,6 +131,72 @@ public class MiniPanTiltTeensy implements Closeable {
   }
 
   /**
+   * Pan the camera mount with values between -100..100,
+   * which represents the percentage of maximum pan rate.
+   * 
+   * @param panPct                                Percentage of maximum pan rate
+   * @throws CommunicationClosedException         Thrown if communication to device is not open
+   * @throws TeensyCommunicationErrorException    Thrown if unexcpeted communication occurs to device.
+   * @throws TeensyCommunicationFailureException  Thrown if communication is interrupted/unable to occur in some way.
+   */
+  public void pan(int panPct) throws 
+      CommunicationClosedException, 
+      TeensyCommunicationErrorException,
+      TeensyCommunicationFailureException {
+    try {
+      if (port == null) {
+          throw new CommunicationClosedException();
+      } else {
+        port.enableReceiveTimeout(100);
+        byte[] rcvdBuffer = new byte[2];
+        String message = Integer.toString(panPct) + "p";
+        byte[] sendBuffer = message.getBytes("US-ASCII");
+        out.write(sendBuffer, 0, sendBuffer.length);
+        int count = in.read(rcvdBuffer);
+        if (!(count == 2 && new String(rcvdBuffer).contentEquals(T_OK_REPLY))) {
+          throw new TeensyCommunicationErrorException("Unexpected reply received when panning.");
+        }
+      }
+    } catch (UnsupportedCommOperationException|IOException e) {
+      System.err.println(e);
+      throw new TeensyCommunicationFailureException(e);
+    }
+  }
+
+  /**
+   * Tilt the camera mount with values between -100..100,
+   * which represents the percentage of maximum tilt rate.
+   * 
+   * @param tiltPct                               Percentage of maximum tilt rate
+   * @throws CommunicationClosedException         Thrown if communication to device is not open
+   * @throws TeensyCommunicationErrorException    Thrown if unexcpeted communication occurs to device.
+   * @throws TeensyCommunicationFailureException  Thrown if communication is interrupted/unable to occur in some way.
+   */
+  public void tilt(int tiltPct) throws 
+      CommunicationClosedException, 
+      TeensyCommunicationErrorException,
+      TeensyCommunicationFailureException {
+    try {
+      if (port == null) {
+          throw new CommunicationClosedException();
+      } else {
+        port.enableReceiveTimeout(100);
+        byte[] rcvdBuffer = new byte[2];
+        String message = Integer.toString(tiltPct) + "t";
+        byte[] sendBuffer = message.getBytes("US-ASCII");
+        out.write(sendBuffer, 0, sendBuffer.length);
+        int count = in.read(rcvdBuffer);
+        if (!(count == 2 && new String(rcvdBuffer).contentEquals(T_OK_REPLY))) {
+          throw new TeensyCommunicationErrorException("Unexpected reply received when tilting.");
+        }
+      }
+    } catch (UnsupportedCommOperationException|IOException e) {
+      System.err.println(e);
+      throw new TeensyCommunicationFailureException(e);
+    }
+  }
+
+  /**
    * Center the mount of both axes.
    * 
    * @return  True if successful.

@@ -58,8 +58,21 @@ public class CommandProcessor implements Runnable {
                   case 'B':
                   case 'X':
                   case 'Y':
+                  case 'c':
                     // We got a terminating command so make it ready
                     command = new Command(inputChar);
+                    valueBuilder.reset();
+                    commandAvailable = true;
+                    break;
+                  case 'p':
+                    command = new Command(inputChar, valueBuilder.getValue());
+                    System.out.println(String.format("pan cmd value:%.4f", command.getValue()));
+                    valueBuilder.reset();
+                    commandAvailable = true;
+                    break;
+                  case 't':
+                    command = new Command(inputChar, valueBuilder.getValue());
+                    System.out.println(String.format("tilt cmd value:%.4f", command.getValue()));
                     valueBuilder.reset();
                     commandAvailable = true;
                     break;

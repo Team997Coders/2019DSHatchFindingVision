@@ -152,17 +152,26 @@ public class HatchTargetPipelineInterpreter {
         double oneHalfFOVPixelWidth = cameraParameters.getFOVPixelWidth() / 2;
         double oneHalfFOVPixelHeight = cameraParameters.getFOVPixelHeight() / 2;
         if (center.x > oneHalfFOVPixelWidth) {
-          center.x = (center.x - (cameraParameters.getFOVPixelWidth() / 2)) / oneHalfFOVPixelWidth;
-          center.y = (center.y - (cameraParameters.getFOVPixelHeight() / 2)) / oneHalfFOVPixelHeight;
+          point.x = (center.x - (cameraParameters.getFOVPixelWidth() / 2)) / oneHalfFOVPixelWidth;
+          point.y = (center.y - (cameraParameters.getFOVPixelHeight() / 2)) / oneHalfFOVPixelHeight;
         } else {
-          center.x = (((cameraParameters.getFOVPixelWidth() / 2) - center.x) / oneHalfFOVPixelWidth) * -1;
-          center.y = (((cameraParameters.getFOVPixelHeight() / 2) - center.y ) / oneHalfFOVPixelHeight) * -1;
+          point.x = (((cameraParameters.getFOVPixelWidth() / 2) - center.x) / oneHalfFOVPixelWidth) * -1;
+          point.y = (((cameraParameters.getFOVPixelHeight() / 2) - center.y ) / oneHalfFOVPixelHeight) * -1;
         }
         return point;
       }
     }
     throw new TargetNotFoundException();
   }
+
+	public HatchTarget getHatchTargetFromPoint(Point point) throws TargetNotFoundException {
+    for (HatchTarget hatchTarget: getHatchTargets()) {
+      if (hatchTarget.targetRectangle().boundingRect().contains(point)) {
+        return hatchTarget;
+      }
+    }
+    throw new TargetNotFoundException("No hatch target found containing point.");
+	}
 
 	/**
 	 * Return the center points for each found hatch target.
