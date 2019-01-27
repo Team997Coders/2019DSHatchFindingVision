@@ -37,23 +37,6 @@ public class ImageAnnotator {
     this.hatchTargetSlewingColor = new Scalar(0, 51, 255);      // red
   }
 
-  /**
-   * Custom exception to indicate that a target is not expected
-   * where it should be.
-   */
-  public class TargetNotFoundException extends Exception {
-    public TargetNotFoundException () {}
-    public TargetNotFoundException (String message) {
-      super (message);
-    }
-    public TargetNotFoundException (Throwable cause) {
-      super (cause);
-    }
-    public TargetNotFoundException (String message, Throwable cause) {
-      super (message, cause);
-    }
-  }
-
   public void beginAnnotation(Mat inputImage) {
     inputImage.copyTo(outputImage);
   }

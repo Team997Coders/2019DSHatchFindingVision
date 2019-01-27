@@ -3,9 +3,7 @@ import edu.wpi.cscore.HttpCamera.HttpCameraKind;
 import edu.wpi.first.wpilibj.networktables.*;
 import edu.wpi.first.wpilibj.tables.*;
 
-import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.*;
 import org.opencv.core.*;
 
@@ -112,7 +110,9 @@ public class Main {
     ImageAnnotator imageAnnotator = new ImageAnnotator(interpreter);
 
     // Get the HUD
-    HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotator, interpreter);
+    MiniPanTiltTeensy panTilt = null;
+    try {panTilt = new MiniPanTiltTeensy();} catch(Exception e){}
+    HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotator, interpreter, new MiniPID(.3, .01, .01), new MiniPID(.3, .01, .01), panTilt);
 
     // Get the state machine
     HeadsUpDisplayStateMachine stateMachine = new HeadsUpDisplayStateMachine(hud);

@@ -13,7 +13,7 @@ public class HeadsUpDisplayStateMachine {
     this(hud, new StateMachine<>(State.IdentifyingTargets, GetConfig(hud)));
   }
 
-  public HeadsUpDisplayStateMachine(HeadsUpDisplay hud,  StateMachine<State, Trigger> stateMachine) {
+  public HeadsUpDisplayStateMachine(HeadsUpDisplay hud, StateMachine<State, Trigger> stateMachine) {
     this.stateMachine = stateMachine;
   }
 
@@ -23,6 +23,11 @@ public class HeadsUpDisplayStateMachine {
     // It would be super nice to use the permitIfOtherwiseIgnore function,
     // but alas it is not available in a release version.
     config.configure(State.IdentifyingTargets)
+      .onEntry(new Action1<Transition<State,Trigger>>() {
+        public void doIt(Transition<State, Trigger> transition) {
+          try{hud.stopSlewing();}
+          catch(Exception e){}
+      }})
       .permitIf(Trigger.AButton, State.SlewingToTarget, new FuncBoolean() {
         @Override
         public boolean call() {

@@ -20,6 +20,22 @@ public class HatchTargetPipelineInterpreter {
 	private IHatchTargetPipeline pipeline;
 	private CameraParameters cameraParameters;
 
+  /**
+   * Custom exception to indicate an expected target was not found.
+   */
+  public class TargetNotFound extends Exception {
+    public TargetNotFound () {}
+    public TargetNotFound (String message) {
+      super (message);
+    }
+    public TargetNotFound (Throwable cause) {
+      super (cause);
+    }
+    public TargetNotFound (String message, Throwable cause) {
+      super (message, cause);
+    }
+  }
+
 	/**
 	 * A comparator class for sorting rotated rectangles on the
 	 * x axis left to right.
@@ -117,6 +133,36 @@ public class HatchTargetPipelineInterpreter {
 		}
 		return hatchTargets;
 	}
+
+  /**
+   * Returns a number from -1 to 1 corresponding to the position, from left to right, of the target's
+   * horizontal position relative to the center of the FOV.
+   * 
+   * @param targetIdentifyingPoint  A point inside an identified target.
+   * @return                        The relative position from center represented as -1 to 1, x and y, 
+   *                                with (-1, -1) representing top left.
+   */
+  public Point getNormalizedTargetPositionFromCenter(Point targetIdentifyingPoint) throws TargetNotFoundException {
+    // Find the hatch target containing the identifying point
+    for (HatchTarget hatchTarget: getHatchTargets()) {
+      if (hatchTarget.targetRectangle().boundingRect().contains(targetIdentifyingPoint)) {
+        // Hatch target found
+        Point center = hatchTarget.center();
+        Point point = new Point();
+        double oneHalfFOVPixelWidth = cameraParameters.getFOVPixelWidth() / 2;
+        double oneHalfFOVPixelHeight = cameraParameters.getFOVPixelHeight() / 2;
+        if (center.x > oneHalfFOVPixelWidth) {
+          center.x = (center.x - (cameraParameters.getFOVPixelWidth() / 2)) / oneHalfFOVPixelWidth;
+          center.y = (center.y - (cameraParameters.getFOVPixelHeight() / 2)) / oneHalfFOVPixelHeight;
+        } else {
+          center.x = (((cameraParameters.getFOVPixelWidth() / 2) - center.x) / oneHalfFOVPixelWidth) * -1;
+          center.y = (((cameraParameters.getFOVPixelHeight() / 2) - center.y ) / oneHalfFOVPixelHeight) * -1;
+        }
+        return point;
+      }
+    }
+    throw new TargetNotFoundException();
+  }
 
 	/**
 	 * Return the center points for each found hatch target.
