@@ -166,7 +166,7 @@ public class HeadsUpDisplay implements Closeable {
     if (positioningCamera()) {
       Point normalizedPoint = interpreter.getNormalizedTargetPositionFromCenter(slewPoint);
       int panPct = (int)Math.round(pidX.getOutput(normalizedPoint.x) * 100);
-      int tiltPct = (int)Math.round(pidY.getOutput(normalizedPoint.y) * 100);
+      int tiltPct = (int)Math.round(pidY.getOutput(normalizedPoint.y) * 100) * -1;
       System.out.println(String.format("normalizedPoint.x=%.2f; normalizedPoint.y=%.2f panPct=%d; tiltPct=%d", normalizedPoint.x, normalizedPoint.y, panPct, tiltPct));
       panTilt.slew(panPct, tiltPct);
     }

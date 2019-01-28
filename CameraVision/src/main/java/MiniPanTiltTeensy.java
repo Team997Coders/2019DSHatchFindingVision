@@ -102,6 +102,8 @@ public class MiniPanTiltTeensy implements Closeable {
       CommunicationClosedException, 
       TeensyCommunicationErrorException,
       TeensyCommunicationFailureException {
+    panPct = (int)Math.round(panPct * .25);
+    tiltPct = (int)Math.round(tiltPct * .25);
     try {
       if (port == null) {
           throw new CommunicationClosedException();
@@ -143,6 +145,7 @@ public class MiniPanTiltTeensy implements Closeable {
       CommunicationClosedException, 
       TeensyCommunicationErrorException,
       TeensyCommunicationFailureException {
+    panPct = (int)Math.round(panPct * .25);
     try {
       if (port == null) {
           throw new CommunicationClosedException();
@@ -176,6 +179,7 @@ public class MiniPanTiltTeensy implements Closeable {
       CommunicationClosedException, 
       TeensyCommunicationErrorException,
       TeensyCommunicationFailureException {
+    tiltPct = (int)Math.round(tiltPct * .25);
     try {
       if (port == null) {
           throw new CommunicationClosedException();

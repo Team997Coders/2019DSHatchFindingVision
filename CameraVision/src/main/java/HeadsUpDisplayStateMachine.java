@@ -156,7 +156,6 @@ public class HeadsUpDisplayStateMachine {
   }
 
   public void tilt(int tiltPct) {
-    System.out.println(String.format("tilt:tiltPct:%d", tiltPct));
     this.tiltPct = tiltPct;
     stateMachine.fire(Trigger.Tilt);
   }
@@ -166,7 +165,6 @@ public class HeadsUpDisplayStateMachine {
   }
 
   public void pan(int panPct) {
-    System.out.println(String.format("pan:panPct:%d", panPct));
     this.panPct = panPct;
     stateMachine.fire(Trigger.Pan);
   }
