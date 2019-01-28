@@ -112,10 +112,8 @@ public class Main {
     // Get the HUD
     MiniPanTiltTeensy panTilt = null;
     try {panTilt = new MiniPanTiltTeensy();} catch(Exception e){}
-    MiniPID pidX = new MiniPID(2, 0, 0);
-    pidX.setOutputLimits(.30);
-    MiniPID pidY = new MiniPID(2, 0, 0);
-    pidY.setOutputLimits(.30);
+    MiniPID pidX = new MiniPID(.3, 0, 0);
+    MiniPID pidY = new MiniPID(.3, 0, 0);
     HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotator, interpreter, pidX, pidY, panTilt);
 
     // Get the state machine
