@@ -117,22 +117,45 @@ public class HeadsUpDisplayStateMachine {
       .ignore(Trigger.XButton)
       .ignore(Trigger.YButton);
 
-//TODO: These still need definition work
     config.configure(State.TargetLocked)
-      .permit(Trigger.AButton, State.DrivingToTarget)
-      .permit(Trigger.BButton, State.IdentifyingTargets)
-      .permit(Trigger.LoseLock, State.LockLost);
+      .permit(Trigger.BButton, State.DrivingToTarget)
+      .permit(Trigger.AButton, State.IdentifyingTargets)
+      .permit(Trigger.LoseLock, State.LockLost)
+      .permit(Trigger.Pan, State.Panning)
+      .permit(Trigger.Tilt, State.Tilting)
+      .permit(Trigger.Center, State.Centering)
+      .ignore(Trigger.XButton)
+      .ignore(Trigger.YButton);
 
     config.configure(State.LockFailed)
-      .permit(Trigger.IdentifyTargets, State.IdentifyingTargets);
+      .permit(Trigger.IdentifyTargets, State.IdentifyingTargets)
+      .ignore(Trigger.Pan)
+      .ignore(Trigger.Tilt)
+      .ignore(Trigger.Center)
+      .ignore(Trigger.AButton)
+      .ignore(Trigger.BButton)
+      .ignore(Trigger.XButton)
+      .ignore(Trigger.YButton);
 
     config.configure(State.LockLost)
-      .permit(Trigger.IdentifyTargets, State.IdentifyingTargets);
+      .permit(Trigger.IdentifyTargets, State.IdentifyingTargets)
+      .ignore(Trigger.Pan)
+      .ignore(Trigger.Tilt)
+      .ignore(Trigger.Center)
+      .ignore(Trigger.AButton)
+      .ignore(Trigger.BButton)
+      .ignore(Trigger.XButton)
+      .ignore(Trigger.YButton);
 
     config.configure(State.DrivingToTarget)
       .permit(Trigger.LoseLock, State.LockLost)
-      .permit(Trigger.AButton, State.TargetLocked)
-      .permit(Trigger.BButton, State.IdentifyingTargets);
+      .permit(Trigger.BButton, State.TargetLocked)
+      .permit(Trigger.AButton, State.IdentifyingTargets)
+      .ignore(Trigger.Pan)
+      .ignore(Trigger.Tilt)
+      .ignore(Trigger.Center)
+      .ignore(Trigger.XButton)
+      .ignore(Trigger.YButton);
 
     // TODO: There will also be configurations for calibration menus
 
@@ -187,6 +210,14 @@ public class HeadsUpDisplayStateMachine {
 
   public void failedToLock() {
     stateMachine.fire(Trigger.FailedToLock);
+  }
+
+  public void lockOn() {
+    stateMachine.fire(Trigger.LockOn);
+  }
+
+  public void loseLock() {
+    stateMachine.fire(Trigger.LoseLock);
   }
 
   public enum State {

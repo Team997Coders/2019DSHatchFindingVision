@@ -97,6 +97,32 @@ public class ImageAnnotator {
     Imgproc.putText(outputImage, "A=cancel", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
   }
 
+  public void drawLockedRectangle(Point slewPoint) throws TargetNotFoundException {
+    HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
+    drawRotatedRect(hatchTarget.targetRectangle(), hatchTargetSlewingColor, 4);
+    Point textStart = hatchTarget.center();
+    textStart.x -= 90;
+    textStart.y -= 30;
+    Imgproc.putText(outputImage, "A=cancel; B=drive to target", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
+    textStart = hatchTarget.center();
+    textStart.x -= 30;
+    textStart.y += 5;
+    Imgproc.putText(outputImage, "LOCKED!", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
+  }
+
+  public void drawDrivingRectangle(Point slewPoint) throws TargetNotFoundException {
+    HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
+    drawRotatedRect(hatchTarget.targetRectangle(), hatchTargetSlewingColor, 4);
+    Point textStart = hatchTarget.center();
+    textStart.x -= 150;
+    textStart.y -= 30;
+    Imgproc.putText(outputImage, "A=cancel; B=stop driving, remain locked", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
+    textStart = hatchTarget.center();
+    textStart.x -= 35;
+    textStart.y += 5;
+    Imgproc.putText(outputImage, "DRIVING!", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
+  }
+
   public void printTargetIdentifiers(Map<String, Point> identifierToPointMap) {
     for (Map.Entry<String, Point> entry : identifierToPointMap.entrySet()) {
       Imgproc.putText(outputImage, entry.getKey(), entry.getValue(), Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));

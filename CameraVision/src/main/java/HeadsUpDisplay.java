@@ -68,6 +68,23 @@ public class HeadsUpDisplay implements Closeable {
     }
   }
 
+    /**
+   * Custom exception to indicate that a target is not expected
+   * where it should be.
+   */
+  public class LockLost extends Exception {
+    public LockLost () {}
+    public LockLost (String message) {
+      super (message);
+    }
+    public LockLost (Throwable cause) {
+      super (cause);
+    }
+    public LockLost (String message, Throwable cause) {
+      super (message, cause);
+    }
+  }
+
   /**
    * Determine whether positioning components are available.
    * 
@@ -96,6 +113,7 @@ public class HeadsUpDisplay implements Closeable {
    */
   public Mat update(Mat inputImage, HeadsUpDisplayStateMachine stateMachine) throws
       FailedToLock,
+      LockLost,
       MiniPanTiltTeensy.CommunicationClosedException,
       MiniPanTiltTeensy.TeensyCommunicationErrorException,
       MiniPanTiltTeensy.TeensyCommunicationFailureException {
@@ -117,10 +135,41 @@ public class HeadsUpDisplay implements Closeable {
         // Draw the targeting rectangle being slewed
         imageAnnotator.drawSlewingRectangle(slewPoint);
         // Continuing slewing camera to get selected target in center of FOV
-        slewTargetToCenter();
+        // Use 5% error to call it aligned...may be too much but it locks faster
+        if (slewTargetToCenter(0.05)) {
+          stateMachine.lockOn();
+        }
       } catch (TargetNotFoundException e) {
         // We can no longer find a target containing our selected target point.
-        throw new FailedToLock();
+        stateMachine.failedToLock();
+      }
+    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.TargetLocked) {
+      try {
+        // Update the known center of the selected target from the last known point
+        HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
+        slewPoint = hatchTarget.targetRectangle().center;
+        // Draw the targeting rectangle showing we are locked
+        imageAnnotator.drawLockedRectangle(slewPoint);
+        // Continuing slewing camera to get selected target in center of FOV
+        slewTargetToCenter(0);
+      } catch (TargetNotFoundException e) {
+        // We can no longer find a target containing our selected target point.
+        stateMachine.loseLock();
+      }
+    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.DrivingToTarget) {
+      try {
+        // Update the known center of the selected target from the last known point
+        HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
+        slewPoint = hatchTarget.targetRectangle().center;
+        // Draw the targeting rectangle indicating that driving is in progress
+        imageAnnotator.drawDrivingRectangle(slewPoint);
+        // Continuing slewing camera to get selected target in center of FOV
+        slewTargetToCenter(0);
+        //TODO: FEED NETWORK TABLES TRACKING INFORMATION
+        //TODO: ALSO, ONCE THIS STATE EXITS, THEN NT SHOULD BE CLEARED.
+      } catch (TargetNotFoundException e) {
+        // We can no longer find a target containing our selected target point.
+        stateMachine.loseLock();
       }
     } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.Panning) {
       imageAnnotator.drawTargetingRectangles();
@@ -145,20 +194,27 @@ public class HeadsUpDisplay implements Closeable {
       // TODO: Give visual indication to user that lock failed
       // Print something to the screen for 1-2 seconds
       stateMachine.identifyTargets();
+    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.LockLost) {
+      // TODO: Give visual indication to user that lock was lost
+      // Print something to the screen for 1-2 seconds
+      stateMachine.identifyTargets();
     }
 
     return imageAnnotator.getCompletedAnnotation();
   }
 
   /**
-   * Slew HUD camera to center selected target within the FOV.
+   * Slew HUD camera centering selected target within the FOV. Return
+   * true if target is within lockThresholdFactor on both axes.
    * 
+   * @param lockThresholdFactor   Number between 0..1 indicating percentage error below which we consider target locked.
+   * @return                      True if locked. False if not or not slewing camera because it is not connected.
    * @throws MiniPanTiltTeensy.CommunicationClosedException
    * @throws MiniPanTiltTeensy.TeensyCommunicationErrorException
    * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
    * @throws TargetNotFoundException
    */
-  public void slewTargetToCenter() throws
+  public boolean slewTargetToCenter(double lockThresholdFactor) throws
       MiniPanTiltTeensy.CommunicationClosedException,
       MiniPanTiltTeensy.TeensyCommunicationErrorException,
       MiniPanTiltTeensy.TeensyCommunicationFailureException,
@@ -167,9 +223,15 @@ public class HeadsUpDisplay implements Closeable {
       Point normalizedPoint = interpreter.getNormalizedTargetPositionFromCenter(slewPoint);
       int panPct = (int)Math.round(pidX.getOutput(normalizedPoint.x) * 100);
       int tiltPct = (int)Math.round(pidY.getOutput(normalizedPoint.y) * 100) * -1;
-      System.out.println(String.format("normalizedPoint.x=%.2f; normalizedPoint.y=%.2f panPct=%d; tiltPct=%d", normalizedPoint.x, normalizedPoint.y, panPct, tiltPct));
       panTilt.slew(panPct, tiltPct);
+      if (normalizedPoint.x >= (-1.0 * lockThresholdFactor) && 
+          normalizedPoint.x <= lockThresholdFactor && 
+          normalizedPoint.y >= (-1.0 * lockThresholdFactor) && 
+          normalizedPoint.y <= lockThresholdFactor) {
+        return true;
+      }
     }
+    return false;
   }
 
   /**

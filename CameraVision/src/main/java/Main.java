@@ -111,9 +111,10 @@ public class Main {
 
     // Get the HUD
     MiniPanTiltTeensy panTilt = null;
+    // Just P works pretty well
     try {panTilt = new MiniPanTiltTeensy();} catch(Exception e){}
-    MiniPID pidX = new MiniPID(.3, 0, 0);
-    MiniPID pidY = new MiniPID(.3, 0, 0);
+    MiniPID pidX = new MiniPID(.35, 0, 0);
+    MiniPID pidY = new MiniPID(.35, 0, 0);
     HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotator, interpreter, pidX, pidY, panTilt);
 
     // Get the state machine
@@ -182,14 +183,11 @@ public class Main {
             }
           }
 
-          // Update the HUD
-          try {
-            outputImage = hud.update(inputImage, stateMachine);
-            // Write out the HUD image
-            imageSource.putFrame(outputImage);
-          } catch (HeadsUpDisplay.FailedToLock ftl) {
-            stateMachine.failedToLock();
-          }
+          // Update the HUD image with current state info
+          outputImage = hud.update(inputImage, stateMachine);
+
+          // Write out the HUD image
+          imageSource.putFrame(outputImage);
 
           // Get the next image
           inputImage = imagePump.awaitPumpCompletion();
