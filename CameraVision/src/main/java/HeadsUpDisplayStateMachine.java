@@ -264,21 +264,17 @@ public class HeadsUpDisplayStateMachine {
     stateMachine.fire(Trigger.LeftShoulderButton);
   }
 
-  public void rightShoulderButtonPressed() {
-    stateMachine.fire(Trigger.RightShoulderButton);
-  }
-
   /**
    * The valid states of the state machine.
    */
   public enum State {
-    IdentifyingTargets, SlewingToTarget, TargetLocked, LockFailed, LockLost, DrivingToTarget, Panning, Tilting, Centering, Calibrating, SnappingStills
+    IdentifyingTargets, SlewingToTarget, TargetLocked, LockFailed, LockLost, DrivingToTarget, Panning, Tilting, Centering, Calibrating
   }
 
   /**
    * Triggers that cause state transitions.
    */
   public enum Trigger {
-    AButton, BButton, XButton, YButton, LockOn, FailedToLock, LoseLock, IdentifyTargets, Pan, Tilt, LeftThumbstickButton, RightShoulderButton, LeftShoulderButton
+    AButton, BButton, XButton, YButton, LockOn, FailedToLock, LoseLock, IdentifyTargets, Pan, Tilt, LeftThumbstickButton, LeftShoulderButton
   }
 }

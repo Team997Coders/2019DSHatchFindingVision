@@ -3,9 +3,13 @@ import edu.wpi.cscore.HttpCamera.HttpCameraKind;
 import edu.wpi.first.wpilibj.networktables.*;
 import edu.wpi.first.wpilibj.tables.*;
 
+import java.io.File;
 import java.net.ServerSocket;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import org.opencv.core.*;
+import org.opencv.imgcodecs.Imgcodecs;
 
 public class Main {
 
@@ -113,8 +117,8 @@ public class Main {
     MiniPanTiltTeensy panTilt = null;
     // Just P works pretty well
     try {panTilt = new MiniPanTiltTeensy();} catch(Exception e){}
-    MiniPID pidX = new MiniPID(.35, 0, 0);
-    MiniPID pidY = new MiniPID(.35, 0, 0);
+    MiniPID pidX = new MiniPID(.32, 0, 0);
+    MiniPID pidY = new MiniPID(.32, 0, 0);
     HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotator, interpreter, pidX, pidY, panTilt);
 
     // Get the state machine
@@ -140,6 +144,9 @@ public class Main {
 
       // Prime the image pump
       inputImage = imagePump.pump();
+
+      // Working var to save images at end of processing if requested.
+      boolean saveImages = false;
 
       while (!Thread.currentThread().isInterrupted()) {
         if (!inputImage.empty()) {
@@ -167,11 +174,11 @@ public class Main {
               case 'Y':
                 stateMachine.yButtonPressed();
                 break;
-              case 'p':
+              case 'p': // left joystick x
                 int panPct = (int)command.getValue();
                 stateMachine.pan(panPct);
                 break;
-              case 't':
+              case 't': // left joystick y
                 int tiltPct = (int)command.getValue();
                 stateMachine.tilt(tiltPct);
                 break;
@@ -181,8 +188,8 @@ public class Main {
               case 'e':
                 stateMachine.leftShoulderButtonPressed();
                 break;
-              case 'f':
-                stateMachine.rightShoulderButtonPressed();
+              case 'f': // rightShoulderButtonPressed
+                saveImages = true;
                 break;
               default:
                 System.err.println("Command not recognized.");
@@ -194,6 +201,12 @@ public class Main {
 
           // Write out the HUD image
           imageSource.putFrame(outputImage);
+
+          // This could/should be put into a future
+          if (saveImages) {
+            saveImages = false;
+            saveImages(inputImage, outputImage);
+          }
 
           // Get the next image
           inputImage = imagePump.awaitPumpCompletion();
@@ -209,6 +222,29 @@ public class Main {
       if (commandProcessorThread != null) {
         commandProcessorThread.interrupt();
       }
+    }
+  }
+
+  private void saveImages(Mat inputImage, Mat outputImage) {
+    // Create directory if it does not exist
+    String imagesPath = String.format("%s/images", System.getProperty("user.dir"));
+    new File(imagesPath).mkdirs();
+
+    if ((new File(imagesPath)).isDirectory()) {
+      // Create a unique file prefix
+      DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+      Date today = Calendar.getInstance().getTime();        
+      String dateTime = dateFormat.format(today);
+
+      // Save input image
+      String inputFile = String.format("%s/%s-input.jpg", imagesPath, dateTime);
+      Imgcodecs.imwrite(inputFile, inputImage);
+
+      // Save output image
+      String outputFile = String.format("%s/%s-output.jpg", imagesPath, dateTime);
+      Imgcodecs.imwrite(outputFile, outputImage);
+    } else {
+      System.out.println(String.format("Could not create %s directory to save images.", imagesPath));
     }
   }
 
