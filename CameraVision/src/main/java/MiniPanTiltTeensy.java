@@ -242,14 +242,9 @@ public class MiniPanTiltTeensy implements Closeable {
             } else {
                 closePort();
             }
-        } catch(PortInUseException ex) {
-            System.err.println("Port already in use: " + ex);
-        } catch(IOException ex) {
-            System.err.println("IO exception testing port: " + ex);
-        } catch(InterruptedException ex) {
-            System.err.println("Interrupted exception testing port: " + ex);
-        } catch(UnsupportedCommOperationException ex) {
-            System.err.println("Unsupported comm operation testing port: " + ex);
+        } catch(PortInUseException|IOException|InterruptedException|UnsupportedCommOperationException ex) {
+            System.out.println(String.format("Error scanning port: %s", ex.toString()));
+            ex.printStackTrace();
         }
     }
     return null;
