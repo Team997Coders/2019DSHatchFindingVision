@@ -54,22 +54,27 @@ public class CommandProcessor implements Runnable {
                   case '-':
                     valueBuilder.setNegative();
                     break;
-                  case 'A':
-                  case 'B':
-                  case 'X':
-                  case 'Y':
-                  case 'c':
+                  case 'A': // A button
+                  case 'B': // B button
+                  case 'X': // X button
+                  case 'Y': // Y button
+                  case 'c': // Left thumbstick button
+                  case 'd': // Right thumbstick button
+                  case 'e': // Left shoulder button
+                  case 'f': // Right shoulder button
+                  case 'g': // Left trigger button
+                  case 'h': // Right trigger button
                     // We got a terminating command so make it ready
                     command = new Command(inputChar);
                     valueBuilder.reset();
                     commandAvailable = true;
                     break;
-                  case 'p':
+                  case 'p': // Left X joystick value
                     command = new Command(inputChar, valueBuilder.getValue());
                     valueBuilder.reset();
                     commandAvailable = true;
                     break;
-                  case 't':
+                  case 't': // Left Y joystick value
                     command = new Command(inputChar, valueBuilder.getValue());
                     valueBuilder.reset();
                     commandAvailable = true;

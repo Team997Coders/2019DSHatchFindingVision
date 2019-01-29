@@ -7,6 +7,7 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 /**
@@ -20,6 +21,7 @@ public class ImageAnnotator {
   private final Scalar targetingRectangleColor;
   private final Scalar hatchTargetRectangleColor;
   private final Scalar hatchTargetSlewingColor;
+  private final Scalar textColor;
 
   /**
    * Construct an annotator with an instantiated interpreter.
@@ -35,6 +37,7 @@ public class ImageAnnotator {
     this.targetingRectangleColor = new Scalar(81, 190, 0);      // green
     this.hatchTargetRectangleColor = new Scalar(255, 51, 0);    // blue
     this.hatchTargetSlewingColor = new Scalar(0, 51, 255);      // red
+    this.textColor = new Scalar(2,254,255);                     // yellow
   }
 
   public void beginAnnotation(Mat inputImage) {
@@ -72,7 +75,7 @@ public class ImageAnnotator {
       textStart.y += 10;
       long width = Math.round((rotatedRect.size.width < rotatedRect.size.height ? rotatedRect.size.width : rotatedRect.size.height) * 100);
       double roundedWidth = ((double)width)/100;
-      Imgproc.putText(outputImage, Double.toString(roundedWidth), textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
+      Imgproc.putText(outputImage, Double.toString(roundedWidth), textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
     }
   }
 
@@ -85,7 +88,7 @@ public class ImageAnnotator {
       textStart.y += 10;
       long distance = Math.round(hatchTarget.rangeInInches() * 10);
       double roundedDistance = ((double)distance)/10;
-      Imgproc.putText(outputImage, "d: " + Double.toString(roundedDistance), textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
+      Imgproc.putText(outputImage, "d: " + Double.toString(roundedDistance), textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
     }
   }
 
@@ -94,7 +97,7 @@ public class ImageAnnotator {
     drawRotatedRect(hatchTarget.targetRectangle(), hatchTargetSlewingColor, 4);
     Point textStart = hatchTarget.center();
     textStart.x -= 30;
-    Imgproc.putText(outputImage, "A=cancel", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
+    Imgproc.putText(outputImage, "A=cancel", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
   }
 
   public void drawLockedRectangle(Point slewPoint) throws TargetNotFoundException {
@@ -103,11 +106,11 @@ public class ImageAnnotator {
     Point textStart = hatchTarget.center();
     textStart.x -= 90;
     textStart.y -= 30;
-    Imgproc.putText(outputImage, "A=cancel; B=drive to target", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
+    Imgproc.putText(outputImage, "A=cancel; B=drive to target", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
     textStart = hatchTarget.center();
     textStart.x -= 30;
     textStart.y += 5;
-    Imgproc.putText(outputImage, "LOCKED!", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
+    Imgproc.putText(outputImage, "LOCKED!", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
   }
 
   public void drawDrivingRectangle(Point slewPoint) throws TargetNotFoundException {
@@ -116,16 +119,29 @@ public class ImageAnnotator {
     Point textStart = hatchTarget.center();
     textStart.x -= 150;
     textStart.y -= 30;
-    Imgproc.putText(outputImage, "A=cancel; B=stop driving, remain locked", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
+    Imgproc.putText(outputImage, "A=cancel; B=stop driving, remain locked", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
     textStart = hatchTarget.center();
     textStart.x -= 35;
     textStart.y += 5;
-    Imgproc.putText(outputImage, "DRIVING!", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
+    Imgproc.putText(outputImage, "DRIVING!", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
+  }
+
+  public void drawCalibrationInformation() {
+    Size size = outputImage.size();
+    ImageUtilities imageUtilities = new ImageUtilities(outputImage);
+    float luminosity = imageUtilities.getAverageLuminosity();
+    Point textStart = new Point((size.width/2) - 100, size.height/2);
+    Imgproc.putText(outputImage, 
+      String.format("A=cancel; Luminosity=%.4f", luminosity), 
+      textStart, 
+      Core.FONT_HERSHEY_COMPLEX_SMALL, 
+      .75, 
+      textColor);
   }
 
   public void printTargetIdentifiers(Map<String, Point> identifierToPointMap) {
     for (Map.Entry<String, Point> entry : identifierToPointMap.entrySet()) {
-      Imgproc.putText(outputImage, entry.getKey(), entry.getValue(), Core.FONT_HERSHEY_COMPLEX_SMALL, .75, new Scalar(2,254,255));
+      Imgproc.putText(outputImage, entry.getKey(), entry.getValue(), Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
     }
   }
 

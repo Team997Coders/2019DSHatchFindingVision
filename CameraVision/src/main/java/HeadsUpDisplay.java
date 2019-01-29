@@ -52,40 +52,6 @@ public class HeadsUpDisplay implements Closeable {
   }
 
   /**
-   * Custom exception to indicate that a target is not expected
-   * where it should be.
-   */
-  public class FailedToLock extends Exception {
-    public FailedToLock () {}
-    public FailedToLock (String message) {
-      super (message);
-    }
-    public FailedToLock (Throwable cause) {
-      super (cause);
-    }
-    public FailedToLock (String message, Throwable cause) {
-      super (message, cause);
-    }
-  }
-
-    /**
-   * Custom exception to indicate that a target is not expected
-   * where it should be.
-   */
-  public class LockLost extends Exception {
-    public LockLost () {}
-    public LockLost (String message) {
-      super (message);
-    }
-    public LockLost (Throwable cause) {
-      super (cause);
-    }
-    public LockLost (String message, Throwable cause) {
-      super (message, cause);
-    }
-  }
-
-  /**
    * Determine whether positioning components are available.
    * 
    * @return  True if positioning available.
@@ -112,13 +78,13 @@ public class HeadsUpDisplay implements Closeable {
    * @throws FailedToLock Thrown if target failed to lock on.
    */
   public Mat update(Mat inputImage, HeadsUpDisplayStateMachine stateMachine) throws
-      FailedToLock,
-      LockLost,
       MiniPanTiltTeensy.CommunicationClosedException,
       MiniPanTiltTeensy.TeensyCommunicationErrorException,
       MiniPanTiltTeensy.TeensyCommunicationFailureException {
     imageAnnotator.beginAnnotation(inputImage);
 
+    // TODO: Clean up this long stanza by breaking up each state implementation into its
+    // own method.
     if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.IdentifyingTargets) {
       imageAnnotator.drawTargetingRectangles();
       imageAnnotator.drawHatchTargetRectangles();
@@ -186,10 +152,15 @@ public class HeadsUpDisplay implements Closeable {
         stateMachine.identifyTargets();
       }
     } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.Centering) {
+      // TODO: Something is up with centering. Pressing button always causes a fire of the state machine
+      // but the pan/tilt does not always respond. Probably some issue between this app and
+      // the pan/tilt and/or the firmware.
       imageAnnotator.drawTargetingRectangles();
       imageAnnotator.drawHatchTargetRectangles();
       center();
       stateMachine.identifyTargets();
+    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.Calibrating) {
+      imageAnnotator.drawCalibrationInformation();
     } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.LockFailed) {
       // TODO: Give visual indication to user that lock failed
       // Print something to the screen for 1-2 seconds

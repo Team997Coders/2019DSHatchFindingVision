@@ -57,7 +57,7 @@ namespace FocusUF
 //					if (cameraControlFlags != CameraControlFlags.Manual)
 //					{
 						Console.Write("Changing exposure");
-						_camera.Set(CameraControlProperty.Exposure, -8, CameraControlFlags.Manual);
+						_camera.Set(CameraControlProperty.Exposure, -10, CameraControlFlags.Manual);
 //					}
 				}
 			}

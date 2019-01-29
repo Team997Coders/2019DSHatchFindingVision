@@ -176,7 +176,13 @@ public class Main {
                 stateMachine.tilt(tiltPct);
                 break;
               case 'c':
-                stateMachine.center();
+                stateMachine.leftThumbstickButtonPressed();
+                break;
+              case 'e':
+                stateMachine.leftShoulderButtonPressed();
+                break;
+              case 'f':
+                stateMachine.rightShoulderButtonPressed();
                 break;
               default:
                 System.err.println("Command not recognized.");

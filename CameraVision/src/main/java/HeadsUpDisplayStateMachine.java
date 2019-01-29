@@ -4,7 +4,11 @@ import com.github.oxo42.stateless4j.delegates.Action1;
 import com.github.oxo42.stateless4j.delegates.FuncBoolean;
 import com.github.oxo42.stateless4j.transitions.Transition;
 
-// TODO: Should this simply extend from StateMachine?
+/**
+ * Implements a state machine to enforce proper sequencing
+ * and execution of the heads up display as the user interacts
+ * with the system.
+ */
 public class HeadsUpDisplayStateMachine {
   private final StateMachine<State, Trigger> stateMachine;
   private int tiltPct;
@@ -20,6 +24,13 @@ public class HeadsUpDisplayStateMachine {
     this.panPct = 0;
   }
 
+  /**
+   * Produces the configuration of the state machine so that it can be instantiated.
+   * 
+   * @param hud   A reference to the HeadsUpDisplay so that the state machine
+   *              can make calls as appropriate as state change.
+   * @return      The configuration.
+   */
   private static StateMachineConfig<State, Trigger> GetConfig(HeadsUpDisplay hud) {
     StateMachineConfig<State, Trigger> config = new StateMachineConfig<>();
 
@@ -34,7 +45,8 @@ public class HeadsUpDisplayStateMachine {
       }})
       .permit(Trigger.Pan, State.Panning)
       .permit(Trigger.Tilt, State.Tilting)
-      .permit(Trigger.Center, State.Centering)
+      .permit(Trigger.LeftThumbstickButton, State.Centering)
+      .permit(Trigger.LeftShoulderButton, State.Calibrating)
       .permitIf(Trigger.AButton, State.SlewingToTarget, new FuncBoolean() {
         @Override
         public boolean call() {
@@ -87,20 +99,35 @@ public class HeadsUpDisplayStateMachine {
     config.configure(State.Panning)
       .permit(Trigger.Tilt, State.Tilting)
       .permitReentry(Trigger.Pan)
-      .permit(Trigger.Center, State.Centering)
-      .permit(Trigger.IdentifyTargets, State.IdentifyingTargets);
+      .permit(Trigger.LeftThumbstickButton, State.Centering)
+      .permit(Trigger.IdentifyTargets, State.IdentifyingTargets)
+      .ignore(Trigger.LeftShoulderButton)
+      .ignore(Trigger.AButton)
+      .ignore(Trigger.BButton)
+      .ignore(Trigger.XButton)
+      .ignore(Trigger.YButton);
 
     config.configure(State.Tilting)
       .permit(Trigger.Pan, State.Panning)
       .permitReentry(Trigger.Tilt)
-      .permit(Trigger.Center, State.Centering)
-      .permit(Trigger.IdentifyTargets, State.IdentifyingTargets);
+      .permit(Trigger.LeftThumbstickButton, State.Centering)
+      .permit(Trigger.IdentifyTargets, State.IdentifyingTargets)
+      .ignore(Trigger.LeftShoulderButton)
+      .ignore(Trigger.AButton)
+      .ignore(Trigger.BButton)
+      .ignore(Trigger.XButton)
+      .ignore(Trigger.YButton);
 
     config.configure(State.Centering)
       .permit(Trigger.Tilt, State.Tilting)
       .permit(Trigger.Pan, State.Panning)
-      .permitReentry(Trigger.Center)
-      .permit(Trigger.IdentifyTargets, State.IdentifyingTargets);
+      .permitReentry(Trigger.LeftThumbstickButton)
+      .permit(Trigger.IdentifyTargets, State.IdentifyingTargets)
+      .ignore(Trigger.LeftShoulderButton)
+      .ignore(Trigger.AButton)
+      .ignore(Trigger.BButton)
+      .ignore(Trigger.XButton)
+      .ignore(Trigger.YButton);
 
     config.configure(State.SlewingToTarget)
       .onEntry(new Action1<Transition<State,Trigger>>() {
@@ -112,10 +139,11 @@ public class HeadsUpDisplayStateMachine {
       .permit(Trigger.AButton, State.IdentifyingTargets)
       .permit(Trigger.Pan, State.Panning)
       .permit(Trigger.Tilt, State.Tilting)
-      .permit(Trigger.Center, State.Centering)
+      .permit(Trigger.LeftThumbstickButton, State.Centering)
       .ignore(Trigger.BButton)
       .ignore(Trigger.XButton)
-      .ignore(Trigger.YButton);
+      .ignore(Trigger.YButton)
+      .ignore(Trigger.LeftShoulderButton);
 
     config.configure(State.TargetLocked)
       .permit(Trigger.BButton, State.DrivingToTarget)
@@ -123,29 +151,32 @@ public class HeadsUpDisplayStateMachine {
       .permit(Trigger.LoseLock, State.LockLost)
       .permit(Trigger.Pan, State.Panning)
       .permit(Trigger.Tilt, State.Tilting)
-      .permit(Trigger.Center, State.Centering)
+      .permit(Trigger.LeftThumbstickButton, State.Centering)
       .ignore(Trigger.XButton)
-      .ignore(Trigger.YButton);
+      .ignore(Trigger.YButton)
+      .ignore(Trigger.LeftShoulderButton);
 
     config.configure(State.LockFailed)
       .permit(Trigger.IdentifyTargets, State.IdentifyingTargets)
       .ignore(Trigger.Pan)
       .ignore(Trigger.Tilt)
-      .ignore(Trigger.Center)
+      .ignore(Trigger.LeftThumbstickButton)
       .ignore(Trigger.AButton)
       .ignore(Trigger.BButton)
       .ignore(Trigger.XButton)
-      .ignore(Trigger.YButton);
+      .ignore(Trigger.YButton)
+      .ignore(Trigger.LeftShoulderButton);
 
     config.configure(State.LockLost)
       .permit(Trigger.IdentifyTargets, State.IdentifyingTargets)
       .ignore(Trigger.Pan)
       .ignore(Trigger.Tilt)
-      .ignore(Trigger.Center)
+      .ignore(Trigger.LeftThumbstickButton)
       .ignore(Trigger.AButton)
       .ignore(Trigger.BButton)
       .ignore(Trigger.XButton)
-      .ignore(Trigger.YButton);
+      .ignore(Trigger.YButton)
+      .ignore(Trigger.LeftShoulderButton);
 
     config.configure(State.DrivingToTarget)
       .permit(Trigger.LoseLock, State.LockLost)
@@ -153,11 +184,20 @@ public class HeadsUpDisplayStateMachine {
       .permit(Trigger.AButton, State.IdentifyingTargets)
       .ignore(Trigger.Pan)
       .ignore(Trigger.Tilt)
-      .ignore(Trigger.Center)
+      .ignore(Trigger.LeftThumbstickButton)
+      .ignore(Trigger.XButton)
+      .ignore(Trigger.YButton)
+      .ignore(Trigger.LeftShoulderButton);
+
+    config.configure(State.Calibrating)
+      .permit(Trigger.AButton, State.IdentifyingTargets)
+      .ignore(Trigger.BButton)
+      .ignore(Trigger.Pan)
+      .ignore(Trigger.Tilt)
+      .ignore(Trigger.LeftThumbstickButton)
+      .ignore(Trigger.LeftShoulderButton)
       .ignore(Trigger.XButton)
       .ignore(Trigger.YButton);
-
-    // TODO: There will also be configurations for calibration menus
 
     return config;
   }
@@ -196,8 +236,8 @@ public class HeadsUpDisplayStateMachine {
     return panPct;
   }
 
-  public void center() {
-    stateMachine.fire(Trigger.Center);
+  public void leftThumbstickButtonPressed() {
+    stateMachine.fire(Trigger.LeftThumbstickButton);
   }
 
   public void identifyTargets() {
@@ -220,11 +260,25 @@ public class HeadsUpDisplayStateMachine {
     stateMachine.fire(Trigger.LoseLock);
   }
 
-  public enum State {
-    IdentifyingTargets, SlewingToTarget, TargetLocked, LockFailed, LockLost, DrivingToTarget, Panning, Tilting, Centering
+  public void leftShoulderButtonPressed() {
+    stateMachine.fire(Trigger.LeftShoulderButton);
   }
 
+  public void rightShoulderButtonPressed() {
+    stateMachine.fire(Trigger.RightShoulderButton);
+  }
+
+  /**
+   * The valid states of the state machine.
+   */
+  public enum State {
+    IdentifyingTargets, SlewingToTarget, TargetLocked, LockFailed, LockLost, DrivingToTarget, Panning, Tilting, Centering, Calibrating, SnappingStills
+  }
+
+  /**
+   * Triggers that cause state transitions.
+   */
   public enum Trigger {
-    AButton, BButton, XButton, YButton, LockOn, FailedToLock, LoseLock, IdentifyTargets, Pan, Tilt, Center
+    AButton, BButton, XButton, YButton, LockOn, FailedToLock, LoseLock, IdentifyTargets, Pan, Tilt, LeftThumbstickButton, RightShoulderButton, LeftShoulderButton
   }
 }
