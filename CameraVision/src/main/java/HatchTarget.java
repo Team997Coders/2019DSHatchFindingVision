@@ -135,8 +135,7 @@ public class HatchTarget {
    * @see http://answers.opencv.org/question/56744/converting-pixel-displacement-into-other-unit/?comment=56918#comment-56918
    */
   public double thetaInDegrees() {
-    // TODO!
-    return 0;
+    return ((cameraParameters.getFOVPixelWidth() * pxToInchesConversion(center().x)) / 2) / rangeInInches();
   }
 
   /**
