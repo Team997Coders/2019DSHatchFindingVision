@@ -118,10 +118,10 @@ public class MiniPanTiltTeensy implements Closeable {
           out.write(sendBuffer, 0, sendBuffer.length);
           count = in.read(rcvdBuffer);
           if (!(count == 2 && new String(rcvdBuffer).contentEquals(T_OK_REPLY))) {
-            throw new TeensyCommunicationErrorException("Unexpected reply received when tilting.");
+            throw new TeensyCommunicationErrorException("slew error: Unexpected reply received when tilting.");
           }
         } else {
-          throw new TeensyCommunicationErrorException("Unexpected reply received when panning.");
+          throw new TeensyCommunicationErrorException("slew error: Unexpected reply received when panning.");
         }
       }
     } catch (UnsupportedCommOperationException|IOException e) {
@@ -154,7 +154,7 @@ public class MiniPanTiltTeensy implements Closeable {
         out.write(sendBuffer, 0, sendBuffer.length);
         int count = in.read(rcvdBuffer);
         if (!(count == 2 && new String(rcvdBuffer).contentEquals(T_OK_REPLY))) {
-          throw new TeensyCommunicationErrorException("Unexpected reply received when panning.");
+          throw new TeensyCommunicationErrorException("pan error: Unexpected reply received when panning.");
         }
       }
     } catch (UnsupportedCommOperationException|IOException e) {
@@ -187,7 +187,7 @@ public class MiniPanTiltTeensy implements Closeable {
         out.write(sendBuffer, 0, sendBuffer.length);
         int count = in.read(rcvdBuffer);
         if (!(count == 2 && new String(rcvdBuffer).contentEquals(T_OK_REPLY))) {
-          throw new TeensyCommunicationErrorException("Unexpected reply received when tilting.");
+          throw new TeensyCommunicationErrorException("tilt error: Unexpected reply received when tilting.");
         }
       }
     } catch (UnsupportedCommOperationException|IOException e) {
@@ -215,7 +215,7 @@ public class MiniPanTiltTeensy implements Closeable {
         out.write(sendBuffer, 0, sendBuffer.length);
         int count = in.read(rcvdBuffer);
         if (!(count == 2 && new String(rcvdBuffer).contentEquals(T_OK_REPLY))) {
-          throw new TeensyCommunicationErrorException("Unexpected reply received when centering.");
+          throw new TeensyCommunicationErrorException("center error: Unexpected reply received when centering.");
         }
       }
     } catch (UnsupportedCommOperationException|IOException e) {
