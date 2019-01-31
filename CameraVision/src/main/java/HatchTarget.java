@@ -121,6 +121,18 @@ public class HatchTarget {
   }
 
   /**
+   * Returns the width of an area in inches, based on the width in pixels and a center point.
+   * Should work for both perpendicular and angled vison.
+   * Use this constructor version if you have two endpoints instead of a center.
+   * These parameters don't actually care which bound you put in first, since it's just an average.
+   * @param leftX Left bound.
+   * @param rightX Right bound.
+   */
+  public double pxToInchesConversion(double leftX, double rightX) {
+    return pxToInchesConversion((leftX + rightX) / 2);
+  }
+
+  /**
    * Returns the width between the two target rectangle's centers.
    * @return width between target's centers. (px) 
    */
@@ -130,12 +142,24 @@ public class HatchTarget {
 
   /**
    * Angle formed between plane of target and line segment drawn from robot position
-   * to center of target.
+   * to center of target. When theta = 0, the robot is perpendicular to the wall.
+   * 
+   * Finds the point at which the range between the camera and the 'wall' made by the targets is
+   * effectively 0, and uses the angle between that and the range to the center of the seen wall.=
    * 
    * @see http://answers.opencv.org/question/56744/converting-pixel-displacement-into-other-unit/?comment=56918#comment-56918
    */
   public double thetaInDegrees() {
-    return ((cameraParameters.getFOVPixelWidth() * pxToInchesConversion(center().x)) / 2) / rangeInInches();
+    if ((rightRectangle.size.width - leftRectangle.size.width) == 0) {
+      return 0;
+    } else if ((rightRectangle.center.x - leftRectangle.center.x) == 0) {
+      return 90;
+    } else {
+      double c = ( ( -1 * ((leftRectangle.size.width) / ((rightRectangle.size.width - leftRectangle.size.width) / (rightRectangle.center.x - leftRectangle.center.x)))) + leftRectangle.size.width);
+      //c is the point at which the 'wall' we're looking at meets the line perpendicular to the range. 
+      //It's in pixels though, so we need to convert it still.
+      return Math.atan( ((center().x - c) * pxToInchesConversion(c, center().x)) / (rangeInInches()) );
+    }
   }
 
   /**
