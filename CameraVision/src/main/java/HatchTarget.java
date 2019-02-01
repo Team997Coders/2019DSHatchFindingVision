@@ -82,6 +82,11 @@ public class HatchTarget {
     if ((widthInPx() * pxToInchesConversion(center().x)) > 15) {
       throw new TargetRectanglesException("Target rectangles are too far apart.");
     }
+
+    // The rectangles shouldn't be tilted more than around 20deg.
+    if ((Math.abs(leftRectangle.center.y - rightRectangle.center.y) * cameraParameters.getRadiansPerPixel()) > Math.toRadians(20)) {
+      throw new TargetRectanglesException("Target rectangles are tilted by too much.");
+    }
   }
 
   public Point center() {
