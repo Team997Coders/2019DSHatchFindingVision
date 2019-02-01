@@ -68,9 +68,15 @@ public class HatchTarget {
     // is the pivot point. RotatedRect angle measures, going counterclockwise, the angle formed
     // by horizontal and the right hand size of the vertex connected to the point. And oh yeah,
     // the angle gets more negative until reaching -90 degrees.
-    if (leftRectangle.angle == -0 || leftRectangle.angle == -90 || rightRectangle.angle == -0 || rightRectangle.angle == -90) {
+    if ((leftRectangle.angle > -55 || leftRectangle.angle == -90) || rightRectangle.angle < -25 || rightRectangle.angle == -0) {
       throw new TargetRectanglesException("Rectangles are not tilted.");
     }
+
+    // The rectangles should have the shorter sides on top and bottom.
+    if ((leftRectangle.size.width > leftRectangle.size.height) || (rightRectangle.size.width > rightRectangle.size.height)) {
+      throw new TargetRectanglesException("Rectagles are tilted the wrong way.");
+    }
+
     // The left-hand rectangle angle should be MORE negative than the right
     // And add a comfortable offset so that we don't pick up two lefts where
     // the left-left is slightly more tilted than the right-left.
