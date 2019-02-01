@@ -40,15 +40,15 @@ public class HatchTargetPipelineLifecam {
 		// Step Normalize0:
 		Mat normalizeInput = source0;
 		int normalizeType = Core.NORM_MINMAX;
-		double normalizeAlpha = 45.0;
-		double normalizeBeta = 55.0;
+		double normalizeAlpha = 0.0;
+		double normalizeBeta = 130.0;
 		normalize(normalizeInput, normalizeType, normalizeAlpha, normalizeBeta, normalizeOutput);
 
 		// Step HSV_Threshold0:
 		Mat hsvThresholdInput = normalizeOutput;
 		double[] hsvThresholdHue = {33.99280575539568, 100.13651877133105};
-		double[] hsvThresholdSaturation = {0.0, 255.0};
-		double[] hsvThresholdValue = {121.53776978417265, 255.0};
+		double[] hsvThresholdSaturation = {27.51798561151079, 163.61774744027306};
+		double[] hsvThresholdValue = {91.72661870503596, 255.0};
 		hsvThreshold(hsvThresholdInput, hsvThresholdHue, hsvThresholdSaturation, hsvThresholdValue, hsvThresholdOutput);
 
 		// Step Find_Contours0:
