@@ -9,7 +9,7 @@ public class CommandProcessor implements Runnable {
   private volatile boolean commandAvailable;
   private Command command;
 
-  CommandProcessor(ServerSocket serverSocket, CommandProcessorValueBuilder valueBuider) {
+  public CommandProcessor(ServerSocket serverSocket, CommandProcessorValueBuilder valueBuider) {
     this.serverSocket = serverSocket;
     this.valueBuilder = valueBuider;
     // Reset the value builder to make sure we are ready to build
@@ -33,6 +33,8 @@ public class CommandProcessor implements Runnable {
       // Only one accept will be allowed at a time...
       System.out.println("Awaiting command connection...");
       try (Socket socket = serverSocket.accept()) {
+        // Disable NAGLE algo so that reply packets are not held up.
+        socket.setTcpNoDelay(true);
         System.out.println("Command connection established...");
         try (InputStream inputStream = socket.getInputStream()) {
           while (!Thread.currentThread().isInterrupted()) {
