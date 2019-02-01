@@ -14,9 +14,12 @@ import org.opencv.core.Point3;
 public class HatchTarget {
 //  private final double HATCHTARGETWIDTHININCHES = 14.5; // School mock target
   private final double HATCHTARGETWIDTHININCHES = 12; // Home mock target
-  RotatedRect leftRectangle;
-  RotatedRect rightRectangle;
-  CameraParameters cameraParameters;
+  private final double TAPEHEIGHTININCHES = 5.5; // Per rule book
+  private final double TAPEWIDTHININCHES = 2.0; // Per rule book
+  private final double TAPEAREAININCHES = TAPEHEIGHTININCHES * TAPEWIDTHININCHES;
+  private RotatedRect leftRectangle;
+  private RotatedRect rightRectangle;
+  private CameraParameters cameraParameters;
 
   /**
    * Custom exception to indicate an invalid set of rotation
@@ -91,18 +94,50 @@ public class HatchTarget {
    * 
    * @see https://wpilib.screenstepslive.com/s/3120/m/8731/l/90361-identifying-and-processing-the-targets
    */
-  public double rangeInInches() {
+  public double rangeInInches(double horizontalViewAngleInDegrees) {
     RotatedRect rect = targetRectangle();
-    double width = rect.size.width > rect.size.height ? rect.size.width : rect.size.height;
-    // One idea is to compare the widths of the interior rectangles...the degree of difference should tells us
-    // something about the angle. We are using the hatch target width below but could use a normalized tape
-    // width since we know all the tape width is 2 inches.
+    // Get length and width for both targeting rectangles
+    double size = leftRectangle.size.height + leftRectangle.size.width + rightRectangle.size.height + rightRectangle.size.width;
+
+    // Adjust to compensate for image not in center of frame horizontally
+    double percentageOffCenterHorizontal = (Math.abs((0.5 * cameraParameters.getFOVPixelWidth()) - rect.center.x)) / (0.5 * cameraParameters.getFOVPixelWidth());
+    double deltaSize = (size * percentageOffCenterHorizontal * (Math.atan(cameraParameters.getWidthTanTheta()) / (2*3.14159)));
+
+    // Adjust to compensate for image not in center of frame vertically
+    double percentageOffCenterVertical = (Math.abs((0.5 * cameraParameters.getFOVPixelHeight()) - rect.center.y)) / (0.5 * cameraParameters.getFOVPixelHeight());
+    deltaSize = deltaSize + (size * percentageOffCenterVertical * (Math.atan(cameraParameters.getHeightTanTheta()) / (2*3.14159)));
+
+    // Adjust for aspect angle
+    deltaSize = deltaSize + (size * (aspectAngleInRadians() / (2*3.14159)));
+    
     // d = Tin*FOVpixel/(2*Tpixel*tanΘ)
 
-    //old method, only worked for perpendicular cases.
-    //return (HATCHTARGETWIDTHININCHES * cameraParameters.getFOVPixelWidth()) / (2 * width * cameraParameters.getTanTheta());
+    return ((TAPEWIDTHININCHES + TAPEHEIGHTININCHES) * 2 * cameraParameters.getFOVPixelWidth()) / (2 * (size - deltaSize) * cameraParameters.getWidthTanTheta());
 
-    return ( (((cameraParameters.getFOVPixelWidth() / 2) * pxToInchesConversion(center().x)) * cameraParameters.getRangeCalibrationInInches()) / cameraParameters.getFOVCalibrationInInches() );
+    //return ( (((cameraParameters.getFOVPixelWidth() / 2) * pxToInchesConversion(center().x)) * cameraParameters.getRangeCalibrationInInches()) / cameraParameters.getFOVCalibrationInInches() );
+  }
+
+
+  public double aspectAngleInRadians() {
+    double pixelDifference = Math.abs(leftRectangle.size.area() - rightRectangle.size.area());
+    return pixelDifference * (Math.atan(cameraParameters.getDiagonalTanTheta()) / cameraParameters.getFOVPixelDiagonal());
+  }
+
+  public double getLeftAndRightRectangleAreaInPixels() {
+    return leftRectangle.size.area() + rightRectangle.size.area();
+  }
+
+  public double getTapeToFOVPixelAreaRatio() {
+    return getLeftAndRightRectangleAreaInPixels() / cameraParameters.getFOVPixelArea();
+  }
+
+  public double getTapeToCalibratedFOVInchAreaRatio() {
+    return (TAPEAREAININCHES * 2) / cameraParameters.getFOVCalibrationInchArea();
+  }
+
+  public double getRangeInchesPerSquarePixel() {
+    return cameraParameters.getRangeCalibrationInInches() / 1836.526788;
+//    return cameraParameters.getRangeCalibrationInInches() / (getTapeToCalibratedFOVInchAreaRatio() * cameraParameters.getFOVPixelArea());
   }
 
   /**
@@ -130,14 +165,21 @@ public class HatchTarget {
 
   /**
    * Angle formed between plane of target and line segment drawn from robot position
-   * to center of target.
+   * to center of target.  Approximation due to tilt of rectangles (height plays a role
+   * because camera pixel height and width are probably not the same).
    * 
    * @see http://answers.opencv.org/question/56744/converting-pixel-displacement-into-other-unit/?comment=56918#comment-56918
    */
+  /*
   public double thetaInDegrees() {
-    // TODO!
-    return 0;
+    double rightRectangleWidth = rightRectangle.size.width < rightRectangle.size.height ? rightRectangle.size.width : rightRectangle.size.height;
+    double leftRectangleWidth = leftRectangle.size.width < leftRectangle.size.height ? leftRectangle.size.width : leftRectangle.size.height;
+
+    double pixelDifference = Math.abs(rightRectangleWidth - leftRectangleWidth);
+
+    return pixelDifference * (cameraParameters.getFOVInDegrees() / cameraParameters.getFOVPixelWidth());
   }
+*/
 
   /**
    * Get an array of points representing the verticies
@@ -163,6 +205,28 @@ public class HatchTarget {
     return vertices;
   }
 
+  private double getAverageTapePixelHeight() {
+    double rightRectangleHeight = rightRectangle.size.width > rightRectangle.size.height ? rightRectangle.size.width : rightRectangle.size.height;
+    double leftRectangleHeight = leftRectangle.size.width > leftRectangle.size.height ? leftRectangle.size.width : leftRectangle.size.height;
+    return (rightRectangleHeight + leftRectangleHeight) / 2;
+  }
+
+  private double getAverageTapePixelWidth() {
+    double rightRectangleWidth = rightRectangle.size.width < rightRectangle.size.height ? rightRectangle.size.width : rightRectangle.size.height;
+    double leftRectangleWidth = leftRectangle.size.width < leftRectangle.size.height ? leftRectangle.size.width : leftRectangle.size.height;
+    return (rightRectangleWidth + leftRectangleWidth) / 2;
+  }
+
+  private RotatedRect getRectangleClosestToFOVCenter() {
+    return Math.abs(cameraParameters.getFOVPixelWidth() - leftRectangle.center.x) < Math.abs(cameraParameters.getFOVPixelWidth() - rightRectangle.center.x) 
+      ? leftRectangle : rightRectangle;
+  }
+
+  private double getTotalTapePixelWidth() {
+    double rightRectangleWidth = rightRectangle.size.width < rightRectangle.size.height ? rightRectangle.size.width : rightRectangle.size.height;
+    double leftRectangleWidth = leftRectangle.size.width < leftRectangle.size.height ? leftRectangle.size.width : leftRectangle.size.height;
+    return leftRectangleWidth + rightRectangleWidth;
+  }
   /**
    * Concatenate the contents of like-typed arrays.
    * 

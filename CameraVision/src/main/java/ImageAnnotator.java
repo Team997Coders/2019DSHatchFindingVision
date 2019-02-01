@@ -79,14 +79,14 @@ public class ImageAnnotator {
     }
   }
 
-  public void printDistanceToHatchTargetInInches() {
+  public void printDistanceToHatchTargetInInches(double horizontalViewAngleInDegrees) {
     for (HatchTarget hatchTarget: interpreter.getHatchTargets()) {
       Point[] vertices = new Point[4];
       RotatedRect rotatedRect = hatchTarget.targetRectangle();
       rotatedRect.points(vertices);
       Point textStart = vertices[0];
       textStart.y += 10;
-      long distance = Math.round(hatchTarget.rangeInInches() * 10);
+      long distance = Math.round(hatchTarget.rangeInInches(horizontalViewAngleInDegrees) * 10);
       double roundedDistance = ((double)distance)/10;
       Imgproc.putText(outputImage, "d: " + Double.toString(roundedDistance), textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
     }

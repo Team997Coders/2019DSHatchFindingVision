@@ -1,8 +1,11 @@
 public class Lifecam5000CameraParameters extends CameraParameters {
-  public double getFOVCalibrationInInches() {
-    return 79.5;
+  public double getFOVWidthCalibrationInInches() {
+    return 79;
+  }
+  public double getFOVHeightCalibrationInInches() {
+    return 59.5;
   }
   public double getRangeCalibrationInInches() {
-    return 87.5;
+    return 89.5;
   }
 }

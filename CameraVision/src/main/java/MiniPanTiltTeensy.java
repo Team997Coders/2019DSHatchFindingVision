@@ -16,8 +16,24 @@ public class MiniPanTiltTeensy implements Closeable {
   private static CommPortIdentifier teensyPortIdentifier = null;
   public final static byte T_READY_CMD = 'r';
   public final static byte T_CENTER_CMD = 'c';
+  public final static byte T_ANGLE_CMD = 'a';
   public final static String T_READY_REPLY = "Ready";
   public final static String T_OK_REPLY = "Ok";
+
+  public class Angles {
+    private final int tilt;
+    private final int pan;
+    public Angles(int tilt, int pan) {
+      this.tilt = tilt;
+      this.pan = pan;
+    }
+    public int getPanAngle() {
+      return pan;
+    }
+    public int getTiltAngle() {
+      return tilt;
+    }
+  }
 
   /**
    * Custom exception to indicate teensy not found
@@ -128,6 +144,47 @@ public class MiniPanTiltTeensy implements Closeable {
       System.err.println(e);
       throw new TeensyCommunicationFailureException(e);
     }
+  }
+
+  /**
+   * Get the pan and tilt angles in degrees from the mount. Center is 90 degrees.
+   * Range is 0 to 180 degrees.
+   * 
+   * @return  An Angles object with the pan and tile angles.
+   * @throws CommunicationClosedException
+   * @throws TeensyCommunicationErrorException
+   * @throws TeensyCommunicationFailureException
+   */
+  public Angles getAngles() throws 
+      CommunicationClosedException, 
+      TeensyCommunicationErrorException,
+      TeensyCommunicationFailureException {
+    try {
+      if (port == null) {
+          throw new CommunicationClosedException();
+      } else {
+        port.enableReceiveTimeout(100);
+        byte[] rcvdBuffer = new byte[5];
+        byte[] sendBuffer = {T_ANGLE_CMD};
+        out.write(sendBuffer, 0, sendBuffer.length);
+        int count = in.read(rcvdBuffer);
+        if (!(count == 5)) {
+          throw new TeensyCommunicationErrorException("pan error: Unexpected reply received when getting angles.");
+        }
+        byte[] tiltBytes = new byte[2];
+        tiltBytes[0] = rcvdBuffer[0];
+        tiltBytes[1] = rcvdBuffer[1];
+        byte[] panBytes = new byte[2];
+        panBytes[0] = rcvdBuffer[3];
+        panBytes[1] = rcvdBuffer[4];
+        int tilt = Integer.parseInt(new String(tiltBytes, "US-ASCII"), 16);
+        int pan = Integer.parseInt(new String(panBytes, "US-ASCII"), 16);
+        return new Angles(tilt, pan);
+      }
+    } catch (UnsupportedCommOperationException|IOException e) {
+      System.err.println(e);
+      throw new TeensyCommunicationFailureException(e);
+    }    
   }
 
   /**
