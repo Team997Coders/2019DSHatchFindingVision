@@ -24,8 +24,8 @@ import org.opencv.objdetect.*;
 public class HatchTargetPipelineLifecam {
 
 	//Outputs
-	private Mat hsvThresholdOutput = new Mat();
 	private Mat normalizeOutput = new Mat();
+	private Mat hsvThresholdOutput = new Mat();
 	private ArrayList<MatOfPoint> findContoursOutput = new ArrayList<MatOfPoint>();
 	private ArrayList<MatOfPoint> filterContoursOutput = new ArrayList<MatOfPoint>();
 
@@ -37,22 +37,22 @@ public class HatchTargetPipelineLifecam {
 	 * This is the primary method that runs the entire pipeline and updates the outputs.
 	 */
 	public void process(Mat source0) {
-		// Step HSV_Threshold0:
-		Mat hsvThresholdInput = source0;
-		double[] hsvThresholdHue = {33.99280575539568, 100.13651877133105};
-		double[] hsvThresholdSaturation = {0.0, 255.0};
-		double[] hsvThresholdValue = {121.53776978417265, 255.0};
-		hsvThreshold(hsvThresholdInput, hsvThresholdHue, hsvThresholdSaturation, hsvThresholdValue, hsvThresholdOutput);
-
 		// Step Normalize0:
-		Mat normalizeInput = hsvThresholdOutput;
+		Mat normalizeInput = source0;
 		int normalizeType = Core.NORM_MINMAX;
 		double normalizeAlpha = 45.0;
 		double normalizeBeta = 55.0;
 		normalize(normalizeInput, normalizeType, normalizeAlpha, normalizeBeta, normalizeOutput);
 
+		// Step HSV_Threshold0:
+		Mat hsvThresholdInput = normalizeOutput;
+		double[] hsvThresholdHue = {33.99280575539568, 100.13651877133105};
+		double[] hsvThresholdSaturation = {0.0, 255.0};
+		double[] hsvThresholdValue = {121.53776978417265, 255.0};
+		hsvThreshold(hsvThresholdInput, hsvThresholdHue, hsvThresholdSaturation, hsvThresholdValue, hsvThresholdOutput);
+
 		// Step Find_Contours0:
-		Mat findContoursInput = normalizeOutput;
+		Mat findContoursInput = hsvThresholdOutput;
 		boolean findContoursExternalOnly = true;
 		findContours(findContoursInput, findContoursExternalOnly, findContoursOutput);
 
@@ -74,19 +74,19 @@ public class HatchTargetPipelineLifecam {
 	}
 
 	/**
-	 * This method is a generated getter for the output of a HSV_Threshold.
-	 * @return Mat output from HSV_Threshold.
-	 */
-	public Mat hsvThresholdOutput() {
-		return hsvThresholdOutput;
-	}
-
-	/**
 	 * This method is a generated getter for the output of a Normalize.
 	 * @return Mat output from Normalize.
 	 */
 	public Mat normalizeOutput() {
 		return normalizeOutput;
+	}
+
+	/**
+	 * This method is a generated getter for the output of a HSV_Threshold.
+	 * @return Mat output from HSV_Threshold.
+	 */
+	public Mat hsvThresholdOutput() {
+		return hsvThresholdOutput;
 	}
 
 	/**
@@ -107,6 +107,18 @@ public class HatchTargetPipelineLifecam {
 
 
 	/**
+	 * Normalizes or remaps the values of pixels in an image.
+	 * @param input The image on which to perform the Normalize.
+	 * @param type The type of normalization.
+	 * @param a The minimum value.
+	 * @param b The maximum value.
+	 * @param output The image in which to store the output.
+	 */
+	private void normalize(Mat input, int type, double a, double b, Mat output) {
+		Core.normalize(input, output, a, b, type);
+	}
+
+	/**
 	 * Segment an image based on hue, saturation, and value ranges.
 	 *
 	 * @param input The image on which to perform the HSL threshold.
@@ -120,18 +132,6 @@ public class HatchTargetPipelineLifecam {
 		Imgproc.cvtColor(input, out, Imgproc.COLOR_BGR2HSV);
 		Core.inRange(out, new Scalar(hue[0], sat[0], val[0]),
 			new Scalar(hue[1], sat[1], val[1]), out);
-	}
-
-	/**
-	 * Normalizes or remaps the values of pixels in an image.
-	 * @param input The image on which to perform the Normalize.
-	 * @param type The type of normalization.
-	 * @param a The minimum value.
-	 * @param b The maximum value.
-	 * @param output The image in which to store the output.
-	 */
-	private void normalize(Mat input, int type, double a, double b, Mat output) {
-		Core.normalize(input, output, a, b, type);
 	}
 
 	/**
