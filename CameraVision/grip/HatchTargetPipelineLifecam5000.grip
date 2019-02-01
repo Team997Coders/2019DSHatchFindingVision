@@ -27,66 +27,83 @@
       </grip:Input>
       <grip:Output step="0" socket="0" previewed="true"/>
     </grip:Step>
-    <grip:Step name="Find Contours">
+    <grip:Step name="Normalize">
       <grip:Input step="1" socket="0"/>
       <grip:Input step="1" socket="1">
-        <value>true</value>
+        <value>MINMAX</value>
       </grip:Input>
-      <grip:Output step="1" socket="0" previewed="true"/>
+      <grip:Input step="1" socket="2">
+        <value>45.0</value>
+      </grip:Input>
+      <grip:Input step="1" socket="3">
+        <value>55.0</value>
+      </grip:Input>
+      <grip:Output step="1" socket="0" previewed="false"/>
     </grip:Step>
-    <grip:Step name="Filter Contours">
+    <grip:Step name="Find Contours">
       <grip:Input step="2" socket="0"/>
       <grip:Input step="2" socket="1">
+        <value>true</value>
+      </grip:Input>
+      <grip:Output step="2" socket="0" previewed="true"/>
+    </grip:Step>
+    <grip:Step name="Filter Contours">
+      <grip:Input step="3" socket="0"/>
+      <grip:Input step="3" socket="1">
         <value>500.0</value>
       </grip:Input>
-      <grip:Input step="2" socket="2">
+      <grip:Input step="3" socket="2">
         <value>0.0</value>
       </grip:Input>
-      <grip:Input step="2" socket="3">
+      <grip:Input step="3" socket="3">
         <value>0.0</value>
       </grip:Input>
-      <grip:Input step="2" socket="4">
+      <grip:Input step="3" socket="4">
         <value>1000.0</value>
       </grip:Input>
-      <grip:Input step="2" socket="5">
+      <grip:Input step="3" socket="5">
         <value>10.0</value>
       </grip:Input>
-      <grip:Input step="2" socket="6">
+      <grip:Input step="3" socket="6">
         <value>2000.0</value>
       </grip:Input>
-      <grip:Input step="2" socket="7">
+      <grip:Input step="3" socket="7">
         <value>
           <double>68.34532374100719</double>
           <int>100</int>
         </value>
       </grip:Input>
-      <grip:Input step="2" socket="8">
+      <grip:Input step="3" socket="8">
         <value>1000.0</value>
       </grip:Input>
-      <grip:Input step="2" socket="9">
+      <grip:Input step="3" socket="9">
         <value>4.0</value>
       </grip:Input>
-      <grip:Input step="2" socket="10">
+      <grip:Input step="3" socket="10">
         <value>0.0</value>
       </grip:Input>
-      <grip:Input step="2" socket="11">
+      <grip:Input step="3" socket="11">
         <value>1000.0</value>
       </grip:Input>
-      <grip:Output step="2" socket="0" previewed="true"/>
+      <grip:Output step="3" socket="0" previewed="true"/>
     </grip:Step>
   </steps>
   <connections>
     <grip:Connection>
-      <grip:Output step="0" socket="0" previewed="true"/>
-      <grip:Input step="1" socket="0"/>
-    </grip:Connection>
-    <grip:Connection>
-      <grip:Output step="1" socket="0" previewed="true"/>
-      <grip:Input step="2" socket="0"/>
+      <grip:Output step="2" socket="0" previewed="true"/>
+      <grip:Input step="3" socket="0"/>
     </grip:Connection>
     <grip:Connection>
       <grip:Output source="0" socket="0" previewed="true"/>
       <grip:Input step="0" socket="0"/>
+    </grip:Connection>
+    <grip:Connection>
+      <grip:Output step="1" socket="0" previewed="false"/>
+      <grip:Input step="2" socket="0"/>
+    </grip:Connection>
+    <grip:Connection>
+      <grip:Output step="0" socket="0" previewed="true"/>
+      <grip:Input step="1" socket="0"/>
     </grip:Connection>
   </connections>
   <settings>
@@ -102,7 +119,7 @@
     <language>Java</language>
     <className>HatchTargetPipelineLifecam</className>
     <implementWpilibPipeline>false</implementWpilibPipeline>
-    <saveDir>C:\Users\chuck\Documents\2019DSHatchFindingVision\CameraVision\src\main\java</saveDir>
+    <saveDir>C:\Users\chsrobotics\Documents</saveDir>
     <packageName></packageName>
     <moduleName>grip</moduleName>
   </codeGenerationSettings>

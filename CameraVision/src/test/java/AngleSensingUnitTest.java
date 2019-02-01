@@ -5,7 +5,7 @@ import org.junit.*;
 import org.mockito.Mockito.*;
 
 import org.opencv.core.*;
-public class DistanceEstimatorUnitTest {
+public class AngleSensingUnitTest {
     /**
      * Tests to see if the distance returned is within an inch of the correct distance between hatches.
      */
@@ -14,10 +14,11 @@ public class DistanceEstimatorUnitTest {
     private double pxPerInch = 20;
 
     @Test
-    public void doesItReturnTheCorrectDistances() {
+    public void whatAngleDoesItReturn() {
         RotatedRect leftRectangleMock = new RotatedRect(
-            //this fancy long decimal is the distance that the center point is offset from point 0,
+            //this fancy long decimal is the distance that the center point is offset from point 0 (in),
             //where the rectangle is actually created.
+            //Change the other number to move the rectangles around.
             new Point((toPx(2) + toPx(0.2796026292)), 0), 
             new Size(toPx(2), toPx(5.5)), 
             -75.5
@@ -39,11 +40,11 @@ public class DistanceEstimatorUnitTest {
         double x = 0;
         
         if (hatchTargetExists != false) {
-            x = (hatchTarget.widthInPx()*hatchTarget.pxToInchesConversion(hatchTarget.center().x));
+            x = hatchTarget.aspectAngleInRadians();
             
         }
 
-        System.out.println("Found distance " + x);
+        System.out.println("Found angle " + x);
             assertTrue("" + x, true);
     }
 
