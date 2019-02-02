@@ -9,7 +9,7 @@ import java.io.*;
  * 
  * @see <a href="https://github.com/Team997Coders/MiniPanTiltTeensy/blob/c5175c8d9cf6aac8fe2b29c6fd7d29d29b847805/src/main/java/CommandProcessor.java#L79">CommandProcessor.process()</a>
  */
-public class MiniPanTiltTeensy implements Closeable {
+public class MiniPanTiltTeensy implements Closeable, IPanTiltMount {
   protected SerialPort port = null;
   protected InputStream in = null;
   protected OutputStream out = null;
@@ -19,21 +19,6 @@ public class MiniPanTiltTeensy implements Closeable {
   public final static byte T_ANGLE_CMD = 'a';
   public final static String T_READY_REPLY = "Ready";
   public final static String T_OK_REPLY = "Ok";
-
-  public class Angles {
-    private final int tilt;
-    private final int pan;
-    public Angles(int tilt, int pan) {
-      this.tilt = tilt;
-      this.pan = pan;
-    }
-    public int getPanAngle() {
-      return pan;
-    }
-    public int getTiltAngle() {
-      return tilt;
-    }
-  }
 
   /**
    * Custom exception to indicate teensy not found
@@ -47,45 +32,6 @@ public class MiniPanTiltTeensy implements Closeable {
       super (cause);
     }
     public TeensyNotFoundException (String message, Throwable cause) {
-      super (message, cause);
-    }
-  }
-
-  public class TeensyCommunicationFailureException extends Exception {
-    public TeensyCommunicationFailureException () {}
-    public TeensyCommunicationFailureException (String message) {
-      super (message);
-    }
-    public TeensyCommunicationFailureException (Throwable cause) {
-      super (cause);
-    }
-    public TeensyCommunicationFailureException (String message, Throwable cause) {
-      super (message, cause);
-    }
-  }
-
-  public class TeensyCommunicationErrorException extends Exception {
-    public TeensyCommunicationErrorException () {}
-    public TeensyCommunicationErrorException (String message) {
-      super (message);
-    }
-    public TeensyCommunicationErrorException (Throwable cause) {
-      super (cause);
-    }
-    public TeensyCommunicationErrorException (String message, Throwable cause) {
-      super (message, cause);
-    }
-  }
-
-  public class CommunicationClosedException extends Exception {
-    public CommunicationClosedException () {}
-    public CommunicationClosedException (String message) {
-      super (message);
-    }
-    public CommunicationClosedException (Throwable cause) {
-      super (cause);
-    }
-    public CommunicationClosedException (String message, Throwable cause) {
       super (message, cause);
     }
   }
@@ -116,8 +62,8 @@ public class MiniPanTiltTeensy implements Closeable {
    */
   public void slew(int panPct, int tiltPct) throws 
       CommunicationClosedException, 
-      TeensyCommunicationErrorException,
-      TeensyCommunicationFailureException {
+      CommunicationErrorException,
+      CommunicationFailureException {
     try {
       if (port == null) {
           throw new CommunicationClosedException();
@@ -134,15 +80,15 @@ public class MiniPanTiltTeensy implements Closeable {
           out.write(sendBuffer, 0, sendBuffer.length);
           count = in.read(rcvdBuffer);
           if (!(count == 2 && new String(rcvdBuffer).contentEquals(T_OK_REPLY))) {
-            throw new TeensyCommunicationErrorException("slew error: Unexpected reply received when tilting.");
+            throw new CommunicationErrorException("slew error: Unexpected reply received when tilting.");
           }
         } else {
-          throw new TeensyCommunicationErrorException("slew error: Unexpected reply received when panning.");
+          throw new CommunicationErrorException("slew error: Unexpected reply received when panning.");
         }
       }
     } catch (UnsupportedCommOperationException|IOException e) {
       System.err.println(e);
-      throw new TeensyCommunicationFailureException(e);
+      throw new CommunicationFailureException(e);
     }
   }
 
@@ -157,8 +103,8 @@ public class MiniPanTiltTeensy implements Closeable {
    */
   public Angles getAngles() throws 
       CommunicationClosedException, 
-      TeensyCommunicationErrorException,
-      TeensyCommunicationFailureException {
+      CommunicationErrorException,
+      CommunicationFailureException {
     try {
       if (port == null) {
           throw new CommunicationClosedException();
@@ -169,7 +115,7 @@ public class MiniPanTiltTeensy implements Closeable {
         out.write(sendBuffer, 0, sendBuffer.length);
         int count = in.read(rcvdBuffer);
         if (!(count == 5)) {
-          throw new TeensyCommunicationErrorException("pan error: Unexpected reply received when getting angles.");
+          throw new CommunicationErrorException("pan error: Unexpected reply received when getting angles.");
         }
         byte[] tiltBytes = new byte[2];
         tiltBytes[0] = rcvdBuffer[0];
@@ -183,7 +129,7 @@ public class MiniPanTiltTeensy implements Closeable {
       }
     } catch (UnsupportedCommOperationException|IOException e) {
       System.err.println(e);
-      throw new TeensyCommunicationFailureException(e);
+      throw new CommunicationFailureException(e);
     }    
   }
 
@@ -198,8 +144,8 @@ public class MiniPanTiltTeensy implements Closeable {
    */
   public void pan(int panPct) throws 
       CommunicationClosedException, 
-      TeensyCommunicationErrorException,
-      TeensyCommunicationFailureException {
+      CommunicationErrorException,
+      CommunicationFailureException {
     try {
       if (port == null) {
           throw new CommunicationClosedException();
@@ -211,12 +157,12 @@ public class MiniPanTiltTeensy implements Closeable {
         out.write(sendBuffer, 0, sendBuffer.length);
         int count = in.read(rcvdBuffer);
         if (!(count == 2 && new String(rcvdBuffer).contentEquals(T_OK_REPLY))) {
-          throw new TeensyCommunicationErrorException("pan error: Unexpected reply received when panning.");
+          throw new CommunicationErrorException("pan error: Unexpected reply received when panning.");
         }
       }
     } catch (UnsupportedCommOperationException|IOException e) {
       System.err.println(e);
-      throw new TeensyCommunicationFailureException(e);
+      throw new CommunicationFailureException(e);
     }
   }
 
@@ -231,8 +177,8 @@ public class MiniPanTiltTeensy implements Closeable {
    */
   public void tilt(int tiltPct) throws 
       CommunicationClosedException, 
-      TeensyCommunicationErrorException,
-      TeensyCommunicationFailureException {
+      CommunicationErrorException,
+      CommunicationFailureException {
     try {
       if (port == null) {
           throw new CommunicationClosedException();
@@ -244,12 +190,12 @@ public class MiniPanTiltTeensy implements Closeable {
         out.write(sendBuffer, 0, sendBuffer.length);
         int count = in.read(rcvdBuffer);
         if (!(count == 2 && new String(rcvdBuffer).contentEquals(T_OK_REPLY))) {
-          throw new TeensyCommunicationErrorException("tilt error: Unexpected reply received when tilting.");
+          throw new CommunicationErrorException("tilt error: Unexpected reply received when tilting.");
         }
       }
     } catch (UnsupportedCommOperationException|IOException e) {
       System.err.println(e);
-      throw new TeensyCommunicationFailureException(e);
+      throw new CommunicationFailureException(e);
     }
   }
 
@@ -260,8 +206,8 @@ public class MiniPanTiltTeensy implements Closeable {
    */
   public void center() throws
       CommunicationClosedException, 
-      TeensyCommunicationErrorException,
-      TeensyCommunicationFailureException {
+      CommunicationErrorException,
+      CommunicationFailureException {
     try {
       if (port == null) {
         throw new CommunicationClosedException();
@@ -272,12 +218,12 @@ public class MiniPanTiltTeensy implements Closeable {
         out.write(sendBuffer, 0, sendBuffer.length);
         int count = in.read(rcvdBuffer);
         if (!(count == 2 && new String(rcvdBuffer).contentEquals(T_OK_REPLY))) {
-          throw new TeensyCommunicationErrorException("center error: Unexpected reply received when centering.");
+          throw new CommunicationErrorException("center error: Unexpected reply received when centering.");
         }
       }
     } catch (UnsupportedCommOperationException|IOException e) {
       System.err.println(e);
-      throw new TeensyCommunicationFailureException(e);
+      throw new CommunicationFailureException(e);
     }
   }
 
