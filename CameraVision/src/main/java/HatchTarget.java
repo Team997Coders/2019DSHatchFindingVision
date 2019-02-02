@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.RotatedRect;
+import org.opencv.core.Size;
 import org.opencv.core.Point;
 
 /**
@@ -48,17 +49,6 @@ public class HatchTarget {
   public HatchTarget(RotatedRect leftRectangle, 
       RotatedRect rightRectangle,
       CameraParameters cameraParameters) throws TargetRectanglesException {
-      if(leftRectangle.angle < -45) {
-        double temp = leftRectangle.size.width;
-        leftRectangle.size.width = leftRectangle.size.height;
-        leftRectangle.size.height = temp;
-      }
-
-      if(rightRectangle.angle < -45) {
-        double temp = rightRectangle.size.width;
-        rightRectangle.size.width = rightRectangle.size.height;
-        rightRectangle.size.height = temp;
-      }
       
     this.leftRectangle = leftRectangle;
     this.rightRectangle = rightRectangle;
@@ -84,16 +74,16 @@ public class HatchTarget {
       System.out.println("Rectangles are not tilted.");
       System.out.println("  leftWidth: " + leftRectangle.size.width + ", leftHeight: " + leftRectangle.size.height);
       System.out.println("  rightWidth: " + rightRectangle.size.width + ", rightHeight: " + rightRectangle.size.height);
-      System.out.println("  leftAngle: " + leftRectangle.size.width + ", rightAngle: " + rightRectangle.angle);
+      System.out.println("  leftAngle: " + leftRectangle.angle + ", rightAngle: " + rightRectangle.angle);
       throw new TargetRectanglesException("Rectangles are not tilted.");
     }
 
     // The rectangles should have the shorter sides on top and bottom.
-    if ((leftRectangle.size.width > leftRectangle.size.height) || (rightRectangle.size.width > rightRectangle.size.height)) {
+    if ((normalize(leftRectangle).width > normalize(leftRectangle).height) || (normalize(rightRectangle).width > normalize(rightRectangle).height)) {
       System.out.println("Rectangles are horizontal.");
       System.out.println("  leftWidth: " + leftRectangle.size.width + ", leftHeight: " + leftRectangle.size.height);
       System.out.println("  rightWidth: " + rightRectangle.size.width + ", rightHeight: " + rightRectangle.size.height);
-      System.out.println("  leftAngle: " + leftRectangle.size.width + ", rightAngle: " + rightRectangle.angle);
+      System.out.println("  leftAngle: " + leftRectangle.angle + ", rightAngle: " + rightRectangle.angle);
       throw new TargetRectanglesException("Rectangles are horizontal.");
     }
 
@@ -278,6 +268,21 @@ public class HatchTarget {
     double leftRectangleWidth = leftRectangle.size.width < leftRectangle.size.height ? leftRectangle.size.width : leftRectangle.size.height;
     return leftRectangleWidth + rightRectangleWidth;
   }
+
+  /**
+   * Height is always measured from the lowest point, point 0, to the first point in a clockwise direction.
+   * If the rectangle's angle is smaller than -45, the height will be along the bottom.
+   * @param rect Rectangle to normalize.
+   * @return A size object with the correct heights.
+   */
+  public Size normalize(RotatedRect rect) {
+    if(rect.angle < -45) {
+      return new Size(rect.size.height, rect.size.width);
+    } else {
+      return rect.size;
+    }
+  }
+
   /**
    * Concatenate the contents of like-typed arrays.
    * 

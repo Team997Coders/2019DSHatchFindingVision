@@ -38,7 +38,7 @@ public class AngleExceptionUnitTest {
         interpreter = new HatchTargetPipelineInterpreter(pipeline, cameraParameters);
         hatchTargets = interpreter.getHatchTargets();
 
-        assertEquals(0, hatchTargets.size());
+        assertEquals(1, hatchTargets.size());
 
     }
 }
