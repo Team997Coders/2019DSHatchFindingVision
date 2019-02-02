@@ -30,7 +30,7 @@ public class AngleExceptionUnitTest {
 
 
         cameraParameters = new Lifecam5000CameraParameters();
-        image = Imgcodecs.imread((new File(".\\src\\test\\resource\\2019-02-01-22-56-56-input.jpg")).getCanonicalPath());
+        image = Imgcodecs.imread((new File(".\\src\\test\\resource\\2019-02-01-23-59-57-input.jpg")).getCanonicalPath());
 
         pipeline = new Lifecam5000HatchTargetPipeline();
         pipeline.process(image);

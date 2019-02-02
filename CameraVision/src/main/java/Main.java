@@ -102,14 +102,6 @@ public class Main {
     // Get pipeline interpreter
     HatchTargetPipelineInterpreter interpreter = new HatchTargetPipelineInterpreter(pipeline, cameraParameters);
 
-    // Get the image processor
-    ImageProcessor imageProcessor = new ImageProcessor(
-      pipeline, 
-      new NetworkTableWriter(
-        interpreter,
-        publishingTable)
-    );
-
     // Get the image annotator
     ImageAnnotator imageAnnotator = new ImageAnnotator(interpreter);
 
@@ -121,6 +113,15 @@ public class Main {
     MiniPID pidY = new MiniPID(.32, 0, 0);
     HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotator, interpreter, pidX, pidY, panTilt);
 
+    // Get the image processor
+    ImageProcessor imageProcessor = new ImageProcessor(
+      pipeline, 
+      new NetworkTableWriter(
+        interpreter,
+        publishingTable,
+        panTilt)
+    );
+    
     // Get the state machine
     HeadsUpDisplayStateMachine stateMachine = new HeadsUpDisplayStateMachine(hud);
 

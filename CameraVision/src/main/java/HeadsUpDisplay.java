@@ -89,7 +89,7 @@ public class HeadsUpDisplay implements Closeable {
       imageAnnotator.drawTargetingRectangles();
       imageAnnotator.drawHatchTargetRectangles();
       int panAngle = Math.abs(panTilt.getAngles().getPanAngle() - 90);
-      imageAnnotator.printDistanceToHatchTargetInInches(panAngle);
+      imageAnnotator.printTargetInfo(panAngle);
       // This is how we associate hatch targets to buttons
       mapButtonsToTargetCenterPoints(interpreter.getHatchTargetCenters());
       // Print the button identifiers on the hatch targets
