@@ -255,7 +255,8 @@ public class Main {
         System.err.println("Pan/tilt protocol error. Terminating.");
         return;
       } catch (CommunicationFailureException | IOException e) {
-        // Assume this is because roborio goes down...in this case, just log, wait a bit
+        // Assume this is because network connectivity goes down or is lost.
+        // In this case, just log, wait a bit
         // and then go around the loop again for another connect.
         e.printStackTrace();
         System.out.println("Attempting to reconnect...");
@@ -282,6 +283,10 @@ public class Main {
     }
   }
 
+  private void handleCommand(Command command) {
+
+  }
+  
   private void saveImages(Mat inputImage, Mat outputImage) {
     // Create directory if it does not exist
     String imagesPath = String.format("%s/images", System.getProperty("user.dir"));
