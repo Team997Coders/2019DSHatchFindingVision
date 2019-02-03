@@ -1,0 +1,29 @@
+1. (x axis) 12" from center (robot offset)
+   (y axis) 0deg 37" from target
+
+    //Has no visible targets.
+
+
+2. (x axis) 12" from center (robot offset)
+   (y axis) ?20deg 37" from target
+
+3. (x axis) 12" (robot offset)
+   (y axis) 10deg 59" from target
+
+4. (x axis) 12" (robot offset)
+   (y axis) 30deg 23.5" from target
+
+5. (x axis) 12" (robot offset)
+   (y axis) 35deg 18" from target
+
+6. (x axis) 12" (robot offset)
+   (y axis) 15deg 53.5" from target
+
+7. (x axis) 12" (robot offset)
+   (y axis) 25deg 29.5" from target
+
+8. (x axis) 12" (robot offset)
+   (y axis) 20deg 37" from target - target skewed 10deg unfavorably
+
+9. (x axis) 12" (robot offset) 
+   (y axis) 20deg 37" from target target skewed 20deg unfavorably

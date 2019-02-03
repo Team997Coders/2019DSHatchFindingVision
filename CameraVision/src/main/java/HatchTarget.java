@@ -66,24 +66,28 @@ public class HatchTarget {
    * @throws TargetRectanglesException   Exception thrown if rectangle angles or width is not valid.
    */
   private void validateTargetRectangles() throws TargetRectanglesException {
+    //System.out.println("  leftWidth: " + leftRectangle.size.width + ", leftHeight: " + leftRectangle.size.height);
+    //System.out.println("  rightWidth: " + rightRectangle.size.width + ", rightHeight: " + rightRectangle.size.height);
+    //System.out.println("  leftAngle: " + leftRectangle.angle + ", rightAngle: " + rightRectangle.angle);
+    
+    // The rectangles shouldn't be tilted more than around 20deg.
+    if ((pxToInchesConversion(center().x) * Math.abs(leftRectangle.center.y - rightRectangle.center.y)) > 2) {
+      System.out.println("Target is tilted by too much.");
+      throw new TargetRectanglesException("Target rectangles are tilted by too much.");
+    }
+
     // The point of the 0th vertex (which is the lowest point, also the greatest y value)
     // is the pivot point. RotatedRect angle measures, going counterclockwise, the angle formed
     // by horizontal and the right hand size of the vertex connected to the point. And oh yeah,
     // the angle gets more negative until reaching -90 degrees.
     if ((leftRectangle.angle > -55 || leftRectangle.angle == -90) || rightRectangle.angle < -25 || rightRectangle.angle == -0) {
       System.out.println("Rectangles are not tilted.");
-      System.out.println("  leftWidth: " + leftRectangle.size.width + ", leftHeight: " + leftRectangle.size.height);
-      System.out.println("  rightWidth: " + rightRectangle.size.width + ", rightHeight: " + rightRectangle.size.height);
-      System.out.println("  leftAngle: " + leftRectangle.angle + ", rightAngle: " + rightRectangle.angle);
       throw new TargetRectanglesException("Rectangles are not tilted.");
     }
 
     // The rectangles should have the shorter sides on top and bottom.
     if ((normalize(leftRectangle).width > normalize(leftRectangle).height) || (normalize(rightRectangle).width > normalize(rightRectangle).height)) {
       System.out.println("Rectangles are horizontal.");
-      System.out.println("  leftWidth: " + leftRectangle.size.width + ", leftHeight: " + leftRectangle.size.height);
-      System.out.println("  rightWidth: " + rightRectangle.size.width + ", rightHeight: " + rightRectangle.size.height);
-      System.out.println("  leftAngle: " + leftRectangle.angle + ", rightAngle: " + rightRectangle.angle);
       throw new TargetRectanglesException("Rectangles are horizontal.");
     }
 
@@ -101,11 +105,6 @@ public class HatchTarget {
       throw new TargetRectanglesException("Target rectangles are too far apart.");
     }
 
-    // The rectangles shouldn't be tilted more than around 20deg.
-    if ((Math.abs(leftRectangle.center.y - rightRectangle.center.y) * cameraParameters.getRadiansPerPixel()) > Math.toRadians(20)) {
-      System.out.println("Target rectangles are tilted by too much.");
-      throw new TargetRectanglesException("Target rectangles are tilted by too much.");
-    }
   }
 
   public Point center() {
@@ -117,7 +116,7 @@ public class HatchTarget {
    * 
    * @see https://wpilib.screenstepslive.com/s/3120/m/8731/l/90361-identifying-and-processing-the-targets
    */
-  public double rangeInInches(double horizontalViewAngleInDegrees) {
+  public double rangeInInches() {
     RotatedRect rect = targetRectangle();
     // Get length and width for both targeting rectangles
     double size = leftRectangle.size.height + leftRectangle.size.width + rightRectangle.size.height + rightRectangle.size.width;
@@ -139,7 +138,6 @@ public class HatchTarget {
 
     //return ( (((cameraParameters.getFOVPixelWidth() / 2) * pxToInchesConversion(center().x)) * cameraParameters.getRangeCalibrationInInches()) / cameraParameters.getFOVCalibrationInInches() );
   }
-
 
   public double aspectAngleInRadians() {
     double pixelDifference = Math.abs(leftRectangle.size.area() - rightRectangle.size.area());

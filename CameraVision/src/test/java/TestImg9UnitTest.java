@@ -9,7 +9,7 @@ import org.mockito.Mockito.*;
 
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
-public class AngleExceptionUnitTest {
+public class TestImg9UnitTest {
     /**
      * Tests to see if the distance returned is within an inch of the correct distance between hatches.
      */
@@ -44,6 +44,7 @@ public class AngleExceptionUnitTest {
         for(HatchTarget hatchTarget : hatchTargets) {
             System.out.println("\n ---");
             System.out.println("Range of: " + hatchTarget.rangeInInches());
+            System.out.println("Angle from target of: " + hatchTarget.aspectAngleInRadians());
             assertEquals(37, hatchTarget.rangeInInches(), 1);
         }
 
