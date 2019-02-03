@@ -10,7 +10,7 @@ import org.opencv.core.Point;
  * Encapsulate logic to produce a targeting display that responds to
  * user input.
  */
-public class HeadsUpDisplay implements Closeable {
+public class HeadsUpDisplay {
   private final ImageAnnotator imageAnnotator;
   private final HatchTargetPipelineInterpreter interpreter;
   private Map<HeadsUpDisplayStateMachine.Trigger, Point> buttonToPointMap = new HashMap<HeadsUpDisplayStateMachine.Trigger, Point>();
@@ -19,7 +19,7 @@ public class HeadsUpDisplay implements Closeable {
   private Point slewPoint;
   private final MiniPID pidX;
   private final MiniPID pidY;
-  private final MiniPanTiltTeensy panTilt;
+  private final MiniPanTilt panTilt;
   
   /**
    * Constructor for the HUD taking a reference to an annotator and interpreter and camera control.
@@ -33,7 +33,7 @@ public class HeadsUpDisplay implements Closeable {
       HatchTargetPipelineInterpreter interpreter,
       MiniPID pidX,
       MiniPID pidY,
-      MiniPanTiltTeensy panTilt) {
+      MiniPanTilt panTilt) {
     if (imageAnnotator == null) {
       throw new IllegalArgumentException("Image annotator cannot be null.");
     }
@@ -58,15 +58,6 @@ public class HeadsUpDisplay implements Closeable {
    */
   private boolean positioningCamera() {
     return (panTilt != null);
-  }
-
-  /**
-   * Close open resources.
-   */
-  public void close() {
-    if (positioningCamera()) {
-      panTilt.close();
-    }
   }
 
   /**

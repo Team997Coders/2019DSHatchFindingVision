@@ -7,7 +7,7 @@ import java.io.*;
  * 
  * @see <a href="https://github.com/Team997Coders/MiniPanTiltTeensy/blob/c5175c8d9cf6aac8fe2b29c6fd7d29d29b847805/src/main/java/CommandProcessor.java#L79">CommandProcessor.process()</a>
  */
-public abstract class MiniPanTilt implements Closeable, IPanTiltMount {
+public abstract class MiniPanTilt implements IPanTiltMount {
   protected InputStream in = null;
   protected OutputStream out = null;
   public final static byte T_READY_CMD = 'r';
@@ -16,12 +16,16 @@ public abstract class MiniPanTilt implements Closeable, IPanTiltMount {
   public final static String T_READY_REPLY = "Ready";
   public final static String T_OK_REPLY = "Ok";
 
+  public MiniPanTilt(InputStream in, OutputStream out) {
+    this.in = in;
+    this.out = out;
+  }
 
   /**
-   * This function is called prior to operating on the communication device.
+   * This function is called prior to operating on the communication device
    * (sending or receiving). Use it to make sure things are ready if you need.
    */
-  public abstract void prepareForCommnication() throws CommunicationClosedException, CommunicationFailureException;
+  public abstract void prepareForCommunication() throws CommunicationClosedException, CommunicationFailureException;
 
   /**
    * Slew (both pan and tilt) the camera mount with values between -100..100,
@@ -38,7 +42,7 @@ public abstract class MiniPanTilt implements Closeable, IPanTiltMount {
       CommunicationErrorException,
       CommunicationFailureException {
     try {
-      prepareForCommnication();
+      prepareForCommunication();
       byte[] rcvdBuffer = new byte[2];
       String message = Integer.toString(panPct) + "p";
       byte[] sendBuffer = message.getBytes("US-ASCII");
@@ -55,7 +59,7 @@ public abstract class MiniPanTilt implements Closeable, IPanTiltMount {
       } else {
         throw new CommunicationErrorException("slew error: Unexpected reply received when panning.");
       }
-    } catch (CommunicationFailureException|IOException e) {
+    } catch (IOException e) {
       System.err.println(e);
       throw new CommunicationFailureException(e);
     }
@@ -75,7 +79,7 @@ public abstract class MiniPanTilt implements Closeable, IPanTiltMount {
       CommunicationErrorException,
       CommunicationFailureException {
     try {
-      prepareForCommnication();
+      prepareForCommunication();
       byte[] rcvdBuffer = new byte[5];
       byte[] sendBuffer = {T_ANGLE_CMD};
       out.write(sendBuffer, 0, sendBuffer.length);
@@ -92,7 +96,7 @@ public abstract class MiniPanTilt implements Closeable, IPanTiltMount {
       int tilt = Integer.parseInt(new String(tiltBytes, "US-ASCII"), 16);
       int pan = Integer.parseInt(new String(panBytes, "US-ASCII"), 16);
       return new Angles(tilt, pan);
-    } catch (CommunicationFailureException|IOException e) {
+    } catch (IOException e) {
       System.err.println(e);
       throw new CommunicationFailureException(e);
     }    
@@ -112,7 +116,7 @@ public abstract class MiniPanTilt implements Closeable, IPanTiltMount {
       CommunicationErrorException,
       CommunicationFailureException {
     try {
-      prepareForCommnication();
+      prepareForCommunication();
       byte[] rcvdBuffer = new byte[2];
       String message = Integer.toString(panPct) + "p";
       byte[] sendBuffer = message.getBytes("US-ASCII");
@@ -121,7 +125,7 @@ public abstract class MiniPanTilt implements Closeable, IPanTiltMount {
       if (!(count == 2 && new String(rcvdBuffer).contentEquals(T_OK_REPLY))) {
         throw new CommunicationErrorException("pan error: Unexpected reply received when panning.");
       }
-    } catch (CommunicationFailureException|IOException e) {
+    } catch (IOException e) {
       System.err.println(e);
       throw new CommunicationFailureException(e);
     }
@@ -141,7 +145,7 @@ public abstract class MiniPanTilt implements Closeable, IPanTiltMount {
       CommunicationErrorException,
       CommunicationFailureException {
     try {
-      prepareForCommnication();
+      prepareForCommunication();
       byte[] rcvdBuffer = new byte[2];
       String message = Integer.toString(tiltPct) + "t";
       byte[] sendBuffer = message.getBytes("US-ASCII");
@@ -150,7 +154,7 @@ public abstract class MiniPanTilt implements Closeable, IPanTiltMount {
       if (!(count == 2 && new String(rcvdBuffer).contentEquals(T_OK_REPLY))) {
         throw new CommunicationErrorException("tilt error: Unexpected reply received when tilting.");
       }
-    } catch (CommunicationFailureException|IOException e) {
+    } catch (IOException e) {
       System.err.println(e);
       throw new CommunicationFailureException(e);
     }
@@ -166,7 +170,7 @@ public abstract class MiniPanTilt implements Closeable, IPanTiltMount {
       CommunicationErrorException,
       CommunicationFailureException {
     try {
-      prepareForCommnication();
+      prepareForCommunication();
       byte[] rcvdBuffer = new byte[2];
       byte[] sendBuffer = {T_CENTER_CMD};
       out.write(sendBuffer, 0, sendBuffer.length);
@@ -174,7 +178,7 @@ public abstract class MiniPanTilt implements Closeable, IPanTiltMount {
       if (!(count == 2 && new String(rcvdBuffer).contentEquals(T_OK_REPLY))) {
         throw new CommunicationErrorException("center error: Unexpected reply received when centering.");
       }
-    } catch (CommunicationFailureException|IOException e) {
+    } catch (IOException e) {
       System.err.println(e);
       throw new CommunicationFailureException(e);
     }
