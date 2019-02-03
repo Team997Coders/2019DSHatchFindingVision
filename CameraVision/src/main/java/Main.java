@@ -183,6 +183,7 @@ public class Main {
               imageProcessor.awaitProcessCompletion();
 
               // Fetch a user command and update HUD state machine
+              // TODO: This should be put into its own handler method.
               if (commandProcessor.isCommandAvailable()) {
                 Command command = commandProcessor.getCommand();
                 switch (command.getCommand()) {
