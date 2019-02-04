@@ -9,7 +9,7 @@ import org.mockito.Mockito.*;
 
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
-public class AngleExceptionUnitTest {
+public class TestImg4UnitTest {
     /**
      * Tests to see if the distance returned is within an inch of the correct distance between hatches.
      */
@@ -30,7 +30,7 @@ public class AngleExceptionUnitTest {
 
 
         cameraParameters = new Lifecam5000CameraParameters();
-        image = Imgcodecs.imread((new File(".\\src\\test\\resource\\test_cases\\9.jpg")).getCanonicalPath());
+        image = Imgcodecs.imread((new File(".\\src\\test\\resource\\test_cases\\1.jpg")).getCanonicalPath());
         //image = Imgcodecs.imread((new File(".\\src\\test\\resource\\test_cases\\2.jpg")).getCanonicalPath());
 
         pipeline = new Lifecam5000HatchTargetPipeline();
@@ -44,7 +44,8 @@ public class AngleExceptionUnitTest {
         for(HatchTarget hatchTarget : hatchTargets) {
             System.out.println("\n ---");
             System.out.println("Range of: " + hatchTarget.rangeInInches());
-            assertEquals(37, hatchTarget.rangeInInches(), 1);
+            System.out.println("Angle from target of: " + hatchTarget.aspectAngleInRadians());
+            assertEquals(23.5, hatchTarget.rangeInInches(), 1);
         }
 
     }

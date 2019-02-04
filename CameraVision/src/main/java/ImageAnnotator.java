@@ -100,7 +100,7 @@ public class ImageAnnotator {
       Point textStart = vertices[0];
 
       textStart.y += 10;
-      long distance = Math.round(hatchTarget.rangeInInches(horizontalViewAngleInDegrees) * 10);
+      long distance = Math.round(hatchTarget.rangeInInches() * 10);
       double roundedDistance = ((double)distance)/10;
       long angleFromTarget = Math.round(Math.toDegrees(hatchTarget.aspectAngleInRadians()) * 10);
       double roundedAngle = ((double)angleFromTarget / 10);
