@@ -81,19 +81,19 @@ public class HatchTarget {
     // by horizontal and the right hand size of the vertex connected to the point. And oh yeah,
     // the angle gets more negative until reaching -90 degrees.
     if ((leftRectangle.angle > -55 || leftRectangle.angle == -90) || rightRectangle.angle < -25 || rightRectangle.angle == -0) {
-      System.out.println("Rectangles are not tilted.");
-      System.out.println("  leftWidth: " + leftRectangle.size.width + ", leftHeight: " + leftRectangle.size.height);
-      System.out.println("  rightWidth: " + rightRectangle.size.width + ", rightHeight: " + rightRectangle.size.height);
-      System.out.println("  leftAngle: " + leftRectangle.size.width + ", rightAngle: " + rightRectangle.angle);
+//      System.out.println("Rectangles are not tilted.");
+//      System.out.println("  leftWidth: " + leftRectangle.size.width + ", leftHeight: " + leftRectangle.size.height);
+//      System.out.println("  rightWidth: " + rightRectangle.size.width + ", rightHeight: " + rightRectangle.size.height);
+//      System.out.println("  leftAngle: " + leftRectangle.size.width + ", rightAngle: " + rightRectangle.angle);
       throw new TargetRectanglesException("Rectangles are not tilted.");
     }
 
     // The rectangles should have the shorter sides on top and bottom.
     if ((leftRectangle.size.width > leftRectangle.size.height) || (rightRectangle.size.width > rightRectangle.size.height)) {
-      System.out.println("Rectangles are horizontal.");
-      System.out.println("  leftWidth: " + leftRectangle.size.width + ", leftHeight: " + leftRectangle.size.height);
-      System.out.println("  rightWidth: " + rightRectangle.size.width + ", rightHeight: " + rightRectangle.size.height);
-      System.out.println("  leftAngle: " + leftRectangle.size.width + ", rightAngle: " + rightRectangle.angle);
+//      System.out.println("Rectangles are horizontal.");
+//      System.out.println("  leftWidth: " + leftRectangle.size.width + ", leftHeight: " + leftRectangle.size.height);
+//      System.out.println("  rightWidth: " + rightRectangle.size.width + ", rightHeight: " + rightRectangle.size.height);
+//      System.out.println("  leftAngle: " + leftRectangle.size.width + ", rightAngle: " + rightRectangle.angle);
       throw new TargetRectanglesException("Rectangles are horizontal.");
     }
 
@@ -101,19 +101,19 @@ public class HatchTarget {
     // And add a comfortable offset so that we don't pick up two lefts where
     // the left-left is slightly more tilted than the right-left.
     if ((leftRectangle.angle + 30) > rightRectangle.angle) {
-      System.out.println("Target rectangles are not tilted inward.");
+//      System.out.println("Target rectangles are not tilted inward.");
       throw new TargetRectanglesException("Target rectangles are not tilted inward.");
     }
     
     // The distance between centers when the camera is perpendicular should be ~11.4 inches.
     if ((widthInPx() * pxToInchesConversion(center().x)) > 15) {
-      System.out.println("Target rectangles are too far apart.");
+//      System.out.println("Target rectangles are too far apart.");
       throw new TargetRectanglesException("Target rectangles are too far apart.");
     }
 
     // The rectangles shouldn't be tilted more than around 20deg.
     if ((Math.abs(leftRectangle.center.y - rightRectangle.center.y) * cameraParameters.getRadiansPerPixel()) > Math.toRadians(20)) {
-      System.out.println("Target rectangles are tilted by too much.");
+//      System.out.println("Target rectangles are tilted by too much.");
       throw new TargetRectanglesException("Target rectangles are tilted by too much.");
     }
   }

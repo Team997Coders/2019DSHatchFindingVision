@@ -107,8 +107,11 @@ public class Main {
     // Get the image annotator
     ImageAnnotator imageAnnotator = new ImageAnnotator(interpreter);
 
-    // Begin loop to connect to a MiniPanTilt device
-    while(!Thread.currentThread().isInterrupted()) {
+    // Flag to indicate whether to continue looping
+    boolean looping = true;
+
+    // Begin loop to connect to a MiniPanTilt servos
+    while(looping) {
       MiniPanTilt panTilt = null;
       MiniPanTiltTeensySerialPortFinder teensyPort = null;
       MiniPanTiltSocketProvider panTiltSocket = null;
@@ -116,10 +119,17 @@ public class Main {
       // Connect to MiniPanTilt
       try {
         // First try to connect to a teensy via serial port.
-        if (runtimeSettings.getNTHost() == "") {
-          System.out.println("nthost not specified so looking for MiniPanTilt on serial ports...");
-          teensyPort = new MiniPanTiltTeensySerialPortFinder();
-          panTilt = new MiniPanTiltTeensy(teensyPort.getSerialPort());
+        if (runtimeSettings.getNTHost().toLowerCase().contains("localhost") || 
+            runtimeSettings.getNTHost().contains("127.0.0.1") || 
+            runtimeSettings.getNTHost() == "") {
+          System.out.println("--nthost not specified or using localhost, so looking for MiniPanTilt on serial ports...");
+          try {
+            teensyPort = new MiniPanTiltTeensySerialPortFinder();
+            panTilt = new MiniPanTiltTeensy(teensyPort.getSerialPort());
+          } catch(IOException e) {
+            System.out.println("Are you on Linux? Did you turn off all serial port munging with stty?");
+            throw new TeensyNotFoundException(e);
+          }
         } else {
           // Assume that the network table host is the roborio, which is where the pan/tilt
           // servos have to be installed in production per the rules.
@@ -245,15 +255,13 @@ public class Main {
             commandProcessorThread.interrupt();
           }
         }
-      } catch (MiniPanTiltTeensySerialPortFinder.TeensyNotFoundException | CommunicationClosedException e) {
-        if (runtimeSettings.getNTHost() == "") {
-          System.err.println("Pan/tilt teensy not found or unexpectedly closed and no --nthost specified. Terminating.");
-          return;
-        }
+      } catch (TeensyNotFoundException | CommunicationClosedException e) {
+        System.err.println("MiniPanTilt teensy not found or unexpectedly closed. Terminating.");
+        looping = false;
       } catch (CommunicationErrorException e) {
         e.printStackTrace();
         System.err.println("Pan/tilt protocol error. Terminating.");
-        return;
+        looping = false;
       } catch (CommunicationFailureException | IOException e) {
         // Assume this is because network connectivity goes down or is lost.
         // In this case, just log, wait a bit
@@ -264,7 +272,7 @@ public class Main {
           Thread.sleep(2000);
         } catch (InterruptedException ie) {
           System.out.println("Interrupt received. Exiting pan/tilt processing loop.");
-          return;
+          looping = true;
         }
       } finally {
         if (teensyPort != null) {
@@ -276,15 +284,11 @@ public class Main {
           } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Error closing pan/tilt socket. Terminating.");
-            return;  
+            looping = false;  
           }
         }
       }
     }
-  }
-
-  private void handleCommand(Command command) {
-
   }
   
   private void saveImages(Mat inputImage, Mat outputImage) {

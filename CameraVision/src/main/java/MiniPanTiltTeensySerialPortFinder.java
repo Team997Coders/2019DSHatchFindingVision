@@ -16,22 +16,6 @@ public class MiniPanTiltTeensySerialPortFinder implements Closeable {
   private OutputStream out = null;
 
   /**
-   * Custom exception to indicate teensy not found
-   */
-  public class TeensyNotFoundException extends Exception {
-    public TeensyNotFoundException () {}
-    public TeensyNotFoundException (String message) {
-      super (message);
-    }
-    public TeensyNotFoundException (Throwable cause) {
-      super (cause);
-    }
-    public TeensyNotFoundException (String message, Throwable cause) {
-      super (message, cause);
-    }
-  }
-
-  /**
    * Construct the class and connect to the teensy. The com port is found automatically.
    * 
    * @throws TeensyNotFoundException  Thrown if teensy cannot be found.
@@ -59,7 +43,7 @@ public class MiniPanTiltTeensySerialPortFinder implements Closeable {
    * 
    * @return  Returns the CommPortIdentifier of the found COM port. Null if not found.
    */
-  protected CommPortIdentifier findTeensyPort() {
+  protected CommPortIdentifier findTeensyPort() throws IOException {
     Enumeration<CommPortIdentifier> e = CommPortIdentifier.getPortIdentifiers();
     while(e.hasMoreElements()) {
         CommPortIdentifier commPortIdentifier = e.nextElement();
@@ -72,7 +56,7 @@ public class MiniPanTiltTeensySerialPortFinder implements Closeable {
             } else {
                 closePort();
             }
-        } catch(PortInUseException|IOException|InterruptedException|UnsupportedCommOperationException ex) {
+        } catch(PortInUseException|InterruptedException|UnsupportedCommOperationException ex) {
             System.out.println(String.format("Error scanning port: %s", ex.toString()));
             ex.printStackTrace();
         }
