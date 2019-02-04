@@ -10,7 +10,7 @@ import org.opencv.core.Point;
  * Encapsulate logic to produce a targeting display that responds to
  * user input.
  */
-public class HeadsUpDisplay implements Closeable {
+public class HeadsUpDisplay {
   private final ImageAnnotator imageAnnotator;
   private final HatchTargetPipelineInterpreter interpreter;
   private Map<HeadsUpDisplayStateMachine.Trigger, Point> buttonToPointMap = new HashMap<HeadsUpDisplayStateMachine.Trigger, Point>();
@@ -19,7 +19,7 @@ public class HeadsUpDisplay implements Closeable {
   private Point slewPoint;
   private final MiniPID pidX;
   private final MiniPID pidY;
-  private final MiniPanTiltTeensy panTilt;
+  private final MiniPanTilt panTilt;
   
   /**
    * Constructor for the HUD taking a reference to an annotator and interpreter and camera control.
@@ -33,7 +33,7 @@ public class HeadsUpDisplay implements Closeable {
       HatchTargetPipelineInterpreter interpreter,
       MiniPID pidX,
       MiniPID pidY,
-      MiniPanTiltTeensy panTilt) {
+      MiniPanTilt panTilt) {
     if (imageAnnotator == null) {
       throw new IllegalArgumentException("Image annotator cannot be null.");
     }
@@ -61,15 +61,6 @@ public class HeadsUpDisplay implements Closeable {
   }
 
   /**
-   * Close open resources.
-   */
-  public void close() {
-    if (positioningCamera()) {
-      panTilt.close();
-    }
-  }
-
-  /**
    * Update the image processing display and camera mount based on current state of state machine.
    * 
    * @param inputImage    The inputImage to annotate.
@@ -78,9 +69,9 @@ public class HeadsUpDisplay implements Closeable {
    * @throws FailedToLock Thrown if target failed to lock on.
    */
   public Mat update(Mat inputImage, HeadsUpDisplayStateMachine stateMachine) throws
-      MiniPanTiltTeensy.CommunicationClosedException,
-      MiniPanTiltTeensy.TeensyCommunicationErrorException,
-      MiniPanTiltTeensy.TeensyCommunicationFailureException {
+      CommunicationClosedException,
+      CommunicationErrorException,
+      CommunicationFailureException {
     imageAnnotator.beginAnnotation(inputImage);
 
     // TODO: Clean up this long stanza by breaking up each state implementation into its
@@ -187,9 +178,9 @@ public class HeadsUpDisplay implements Closeable {
    * @throws TargetNotFoundException
    */
   public boolean slewTargetToCenter(double lockThresholdFactor) throws
-      MiniPanTiltTeensy.CommunicationClosedException,
-      MiniPanTiltTeensy.TeensyCommunicationErrorException,
-      MiniPanTiltTeensy.TeensyCommunicationFailureException,
+      CommunicationClosedException,
+      CommunicationErrorException,
+      CommunicationFailureException,
       TargetNotFoundException {
     if (positioningCamera()) {
       Point normalizedPoint = interpreter.getNormalizedTargetPositionFromCenter(slewPoint);
@@ -217,9 +208,9 @@ public class HeadsUpDisplay implements Closeable {
    * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
    */
   public void slew(int panPct, int tiltPct) throws
-      MiniPanTiltTeensy.CommunicationClosedException,
-      MiniPanTiltTeensy.TeensyCommunicationErrorException,
-      MiniPanTiltTeensy.TeensyCommunicationFailureException {
+      CommunicationClosedException,
+      CommunicationErrorException,
+      CommunicationFailureException {
     if (positioningCamera()) {
       panTilt.slew(panPct, tiltPct);
     }
@@ -235,9 +226,9 @@ public class HeadsUpDisplay implements Closeable {
    * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
    */
   public void pan(int panPct) throws
-      MiniPanTiltTeensy.CommunicationClosedException,
-      MiniPanTiltTeensy.TeensyCommunicationErrorException,
-      MiniPanTiltTeensy.TeensyCommunicationFailureException {
+      CommunicationClosedException,
+      CommunicationErrorException,
+      CommunicationFailureException {
     if (positioningCamera()) {
       panTilt.pan(panPct);
     }
@@ -253,9 +244,9 @@ public class HeadsUpDisplay implements Closeable {
    * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
    */
   public void tilt(int tiltPct) throws
-      MiniPanTiltTeensy.CommunicationClosedException,
-      MiniPanTiltTeensy.TeensyCommunicationErrorException,
-      MiniPanTiltTeensy.TeensyCommunicationFailureException {
+      CommunicationClosedException,
+      CommunicationErrorException,
+      CommunicationFailureException {
     if (positioningCamera()) {
       panTilt.tilt(tiltPct);
     }
@@ -269,9 +260,9 @@ public class HeadsUpDisplay implements Closeable {
    * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
    */
   public void center() throws
-      MiniPanTiltTeensy.CommunicationClosedException,
-      MiniPanTiltTeensy.TeensyCommunicationErrorException,
-      MiniPanTiltTeensy.TeensyCommunicationFailureException {
+      CommunicationClosedException,
+      CommunicationErrorException,
+      CommunicationFailureException {
     if (positioningCamera()) {
       panTilt.center();
     }
@@ -285,9 +276,9 @@ public class HeadsUpDisplay implements Closeable {
    * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
    */
   public void stopSlewing() throws 
-      MiniPanTiltTeensy.CommunicationClosedException,
-      MiniPanTiltTeensy.TeensyCommunicationErrorException,
-      MiniPanTiltTeensy.TeensyCommunicationFailureException {
+      CommunicationClosedException,
+      CommunicationErrorException,
+      CommunicationFailureException {
     if(positioningCamera()) {
       panTilt.slew(0, 0);
     }

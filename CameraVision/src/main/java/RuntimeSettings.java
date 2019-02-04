@@ -18,7 +18,7 @@ public class RuntimeSettings {
     @Parameter(names={"--team", "-t"}, required=true, description="FIRST team number")
     private int team;
     @Parameter(names={"--nthost", "-h"},  
-        description="NetworkTables server host IP address (for testing)")
+        description="NetworkTables server host IP address (the roborio address typically)")
     private String ntHost = "";
     @Parameter(names={"--nont", "-n"},  
         description="Do not call out to network tables to write interpreted values")
