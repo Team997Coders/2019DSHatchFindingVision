@@ -6,6 +6,8 @@ import java.util.Map;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 
+import edu.wpi.first.wpilibj.networktables.NetworkTable;
+
 /**
  * Encapsulate logic to produce a targeting display that responds to
  * user input.
@@ -13,13 +15,10 @@ import org.opencv.core.Point;
 public class HeadsUpDisplay {
   private final ImageAnnotator imageAnnotator;
   private final HatchTargetPipelineInterpreter interpreter;
-  private Map<HeadsUpDisplayStateMachine.Trigger, Point> buttonToPointMap = new HashMap<HeadsUpDisplayStateMachine.Trigger, Point>();
+  private Map<CameraControlStateMachine.Trigger, Point> buttonToPointMap = new HashMap<CameraControlStateMachine.Trigger, Point>();
   private Map<String, Point> identifierToPointMap = new HashMap<String, Point>();
-  private final Map<HeadsUpDisplayStateMachine.Trigger, String> buttonToIdentifierMap = new HashMap<>();
+  private final Map<CameraControlStateMachine.Trigger, String> buttonToIdentifierMap = new HashMap<>();
   private Point slewPoint;
-  private final MiniPID pidX;
-  private final MiniPID pidY;
-  private final MiniPanTilt panTilt;
   
   /**
    * Constructor for the HUD taking a reference to an annotator and interpreter and camera control.
@@ -30,61 +29,47 @@ public class HeadsUpDisplay {
    * @param panTilt         The panTilt servos controlling the camera position.
    */
   public HeadsUpDisplay(ImageAnnotator imageAnnotator, 
-      HatchTargetPipelineInterpreter interpreter,
-      MiniPID pidX,
-      MiniPID pidY,
-      MiniPanTilt panTilt) {
+      HatchTargetPipelineInterpreter interpreter) {
     if (imageAnnotator == null) {
       throw new IllegalArgumentException("Image annotator cannot be null.");
     }
     if (interpreter == null) {
       throw new IllegalArgumentException("Image interpreter cannot be null.");
     }
-    if (panTilt != null && (pidX == null || pidY == null)) {
-      throw new IllegalArgumentException("PIDs cannot be null");
-    }
     this.imageAnnotator = imageAnnotator;
     this.interpreter = interpreter;
-    this.pidX = pidX;
-    this.pidY = pidY;
-    this.panTilt = panTilt;
     mapButtonsToIdentifiers();
-  }
-
-  /**
-   * Determine whether positioning components are available.
-   * 
-   * @return  True if positioning available.
-   */
-  private boolean positioningCamera() {
-    return (panTilt != null);
   }
 
   /**
    * Update the image processing display and camera mount based on current state of state machine.
    * 
    * @param inputImage    The inputImage to annotate.
-   * @param currentState  The current state of the state machine.
+   * @param currentState  The vision network table.
+   * @param smartDashboard The smartdashboard network table.
    * @return              Return the annotated image.
    * @throws FailedToLock Thrown if target failed to lock on.
    */
-  public Mat update(Mat inputImage, HeadsUpDisplayStateMachine stateMachine) throws
-      CommunicationClosedException,
-      CommunicationErrorException,
-      CommunicationFailureException {
+  public Mat update(Mat inputImage, NetworkTable visionNetworkTable, NetworkTable smartDashboard) { 
     imageAnnotator.beginAnnotation(inputImage);
 
+    String state = visionNetworkTable.getString("State", "");
+    int panAngle = (int) Math.round(Math.abs(smartDashboard.getDouble("Camera Pan Angle", 90) - 90));
     // TODO: Clean up this long stanza by breaking up each state implementation into its
     // own method.
-    if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.IdentifyingTargets) {
+    if (state == "IdentifyingTargets") {
       imageAnnotator.drawTargetingRectangles();
       imageAnnotator.drawHatchTargetRectangles();
-      int panAngle = Math.abs(panTilt.getAngles().getPanAngle() - 90);
       imageAnnotator.printTargetInfo(panAngle);
       // This is how we associate hatch targets to buttons
       mapButtonsToTargetCenterPoints(interpreter.getHatchTargetCenters());
       // Print the button identifiers on the hatch targets
       imageAnnotator.printTargetIdentifiers(identifierToPointMap);
+      ArrayList<String> triggers = new ArrayList<String>();
+      buttonToPointMap.keySet().forEach((key) -> triggers.add(key.toString()));
+      visionNetworkTable.putStringArray("SelectableTargetTriggers", (String[])triggers.toArray());
+    }
+/*
     } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.SlewingToTarget) {
       try {
         // Update the known center of the selected target from the last known point
@@ -162,126 +147,8 @@ public class HeadsUpDisplay {
       // Print something to the screen for 1-2 seconds
       stateMachine.identifyTargets();
     }
-
+*/
     return imageAnnotator.getCompletedAnnotation();
-  }
-
-  /**
-   * Slew HUD camera centering selected target within the FOV. Return
-   * true if target is within lockThresholdFactor on both axes.
-   * 
-   * @param lockThresholdFactor   Number between 0..1 indicating percentage error below which we consider target locked.
-   * @return                      True if locked. False if not or not slewing camera because it is not connected.
-   * @throws MiniPanTiltTeensy.CommunicationClosedException
-   * @throws MiniPanTiltTeensy.TeensyCommunicationErrorException
-   * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
-   * @throws TargetNotFoundException
-   */
-  public boolean slewTargetToCenter(double lockThresholdFactor) throws
-      CommunicationClosedException,
-      CommunicationErrorException,
-      CommunicationFailureException,
-      TargetNotFoundException {
-    if (positioningCamera()) {
-      Point normalizedPoint = interpreter.getNormalizedTargetPositionFromCenter(slewPoint);
-      int panPct = (int)Math.round(pidX.getOutput(normalizedPoint.x) * 100);
-      int tiltPct = (int)Math.round(pidY.getOutput(normalizedPoint.y) * 100) * -1;
-      panTilt.slew(panPct, tiltPct);
-      if (normalizedPoint.x >= (-1.0 * lockThresholdFactor) && 
-          normalizedPoint.x <= lockThresholdFactor && 
-          normalizedPoint.y >= (-1.0 * lockThresholdFactor) && 
-          normalizedPoint.y <= lockThresholdFactor) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Slew the HUD camera based on percentage of maximum slew rate.
-   * 
-   * @param panPct    Integer from -100 to 100 indicating pan slew rate as a percentage.
-   * @param tiltPct   Integer from -100 to 100 indicating tilt slew rate as a percentage.
-   * 
-   * @throws MiniPanTiltTeensy.CommunicationClosedException
-   * @throws MiniPanTiltTeensy.TeensyCommunicationErrorException
-   * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
-   */
-  public void slew(int panPct, int tiltPct) throws
-      CommunicationClosedException,
-      CommunicationErrorException,
-      CommunicationFailureException {
-    if (positioningCamera()) {
-      panTilt.slew(panPct, tiltPct);
-    }
-  }
-
-  /**
-   * Pan the HUD camera based on percentage of maximum pan rate.
-   * 
-   * @param panPct    Integer from -100 to 100 indicating pan slew rate as a percentage.
-   * 
-   * @throws MiniPanTiltTeensy.CommunicationClosedException
-   * @throws MiniPanTiltTeensy.TeensyCommunicationErrorException
-   * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
-   */
-  public void pan(int panPct) throws
-      CommunicationClosedException,
-      CommunicationErrorException,
-      CommunicationFailureException {
-    if (positioningCamera()) {
-      panTilt.pan(panPct);
-    }
-  }
-
-  /**
-   * Tilt the HUD camera based on percentage of maximum tilt rate.
-   * 
-   * @param tiltPct    Integer from -100 to 100 indicating tilt slew rate as a percentage.
-   * 
-   * @throws MiniPanTiltTeensy.CommunicationClosedException
-   * @throws MiniPanTiltTeensy.TeensyCommunicationErrorException
-   * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
-   */
-  public void tilt(int tiltPct) throws
-      CommunicationClosedException,
-      CommunicationErrorException,
-      CommunicationFailureException {
-    if (positioningCamera()) {
-      panTilt.tilt(tiltPct);
-    }
-  }
-
-  /**
-   * Slew the HUD camera to the mount's center position.
-   * 
-   * @throws MiniPanTiltTeensy.CommunicationClosedException
-   * @throws MiniPanTiltTeensy.TeensyCommunicationErrorException
-   * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
-   */
-  public void center() throws
-      CommunicationClosedException,
-      CommunicationErrorException,
-      CommunicationFailureException {
-    if (positioningCamera()) {
-      panTilt.center();
-    }
-  }
-
-  /**
-   * Convenience method to stop slewing the HUD camera.
-   * 
-   * @throws MiniPanTiltTeensy.CommunicationClosedException
-   * @throws MiniPanTiltTeensy.TeensyCommunicationErrorException
-   * @throws MiniPanTiltTeensy.TeensyCommunicationFailureException
-   */
-  public void stopSlewing() throws 
-      CommunicationClosedException,
-      CommunicationErrorException,
-      CommunicationFailureException {
-    if(positioningCamera()) {
-      panTilt.slew(0, 0);
-    }
   }
 
   private void mapButtonsToTargetCenterPoints(ArrayList<Point> centerPoints) {
@@ -291,20 +158,20 @@ public class HeadsUpDisplay {
     for(Point point : centerPoints) {
       switch (buttonIndex) {
         case 0:
-          buttonToPointMap.put(HeadsUpDisplayStateMachine.Trigger.AButton, point);
-          identifierToPointMap.put(buttonToIdentifierMap.get(HeadsUpDisplayStateMachine.Trigger.AButton), point);
+          buttonToPointMap.put(CameraControlStateMachine.Trigger.AButton, point);
+          identifierToPointMap.put(buttonToIdentifierMap.get(CameraControlStateMachine.Trigger.AButton), point);
           break;
         case 1:
-          buttonToPointMap.put(HeadsUpDisplayStateMachine.Trigger.BButton, point);
-          identifierToPointMap.put(buttonToIdentifierMap.get(HeadsUpDisplayStateMachine.Trigger.BButton), point);
+          buttonToPointMap.put(CameraControlStateMachine.Trigger.BButton, point);
+          identifierToPointMap.put(buttonToIdentifierMap.get(CameraControlStateMachine.Trigger.BButton), point);
           break;
         case 2:
-          buttonToPointMap.put(HeadsUpDisplayStateMachine.Trigger.XButton, point);
-          identifierToPointMap.put(buttonToIdentifierMap.get(HeadsUpDisplayStateMachine.Trigger.XButton), point);
+          buttonToPointMap.put(CameraControlStateMachine.Trigger.XButton, point);
+          identifierToPointMap.put(buttonToIdentifierMap.get(CameraControlStateMachine.Trigger.XButton), point);
           break;
         case 3:
-          buttonToPointMap.put(HeadsUpDisplayStateMachine.Trigger.YButton, point);
-          identifierToPointMap.put(buttonToIdentifierMap.get(HeadsUpDisplayStateMachine.Trigger.YButton), point);
+          buttonToPointMap.put(CameraControlStateMachine.Trigger.YButton, point);
+          identifierToPointMap.put(buttonToIdentifierMap.get(CameraControlStateMachine.Trigger.YButton), point);
           break;
         default:
           // TODO: Do nothing for now...should the HUD say "more targets" and provide a way to get to them?
@@ -316,23 +183,19 @@ public class HeadsUpDisplay {
 
   private void mapButtonsToIdentifiers() {
     buttonToIdentifierMap.clear();
-    buttonToIdentifierMap.put(HeadsUpDisplayStateMachine.Trigger.AButton, "A");
-    buttonToIdentifierMap.put(HeadsUpDisplayStateMachine.Trigger.BButton, "B");
-    buttonToIdentifierMap.put(HeadsUpDisplayStateMachine.Trigger.XButton, "X");
-    buttonToIdentifierMap.put(HeadsUpDisplayStateMachine.Trigger.YButton, "Y");
+    buttonToIdentifierMap.put(CameraControlStateMachine.Trigger.AButton, "A");
+    buttonToIdentifierMap.put(CameraControlStateMachine.Trigger.BButton, "B");
+    buttonToIdentifierMap.put(CameraControlStateMachine.Trigger.XButton, "X");
+    buttonToIdentifierMap.put(CameraControlStateMachine.Trigger.YButton, "Y");
   }
 
-  public void setSlewPoint(HeadsUpDisplayStateMachine.Trigger trigger) {
+  public void setSlewPoint(CameraControlStateMachine.Trigger trigger) {
     // Set the point to slew to
     slewPoint = buttonToPointMap.get(trigger);
     // Reset the PID control in order to begin slewing
-    if (positioningCamera()) {
-      pidX.reset();
-      pidY.reset();
-    }
   }
 
-  public boolean isSlewPointDefined(HeadsUpDisplayStateMachine.Trigger trigger) {
+  public boolean isSlewPointDefined(CameraControlStateMachine.Trigger trigger) {
     return buttonToPointMap.get(trigger) != null;
   }
 }

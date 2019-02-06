@@ -39,6 +39,7 @@ public class Main {
     System.loadLibrary("opencv_java310");
 
     NetworkTable publishingTable = null;
+    NetworkTable smartDashboardTable = null;
 
     // Wire up camera parameters for a specific camera...this could be parameterized from command line
     CameraParameters cameraParameters = new Lifecam5000CameraParameters();
@@ -54,7 +55,8 @@ public class Main {
 
       }
       NetworkTable.initialize();
-      publishingTable = NetworkTable.getTable("SmartDashboard");
+      publishingTable = NetworkTable.getTable("Vision");
+      smartDashboardTable = NetworkTable.getTable("SmartDashboard");
     }
 
     // This is the network port you want to stream the raw received image to
@@ -110,183 +112,56 @@ public class Main {
     // Flag to indicate whether to continue looping
     boolean looping = true;
 
-    // Begin loop to connect to a MiniPanTilt servos
-    while(looping) {
-      MiniPanTilt panTilt = null;
-      MiniPanTiltTeensySerialPortFinder teensyPort = null;
-      MiniPanTiltSocketProvider panTiltSocket = null;
+    HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotator, interpreter);
 
-      // Connect to MiniPanTilt
-      try {
-        // First try to connect to a teensy via serial port.
-        if (runtimeSettings.getNTHost().toLowerCase().contains("localhost") || 
-            runtimeSettings.getNTHost().contains("127.0.0.1") || 
-            runtimeSettings.getNTHost() == "") {
-          System.out.println("--nthost not specified or using localhost, so looking for MiniPanTilt on serial ports...");
-          try {
-            teensyPort = new MiniPanTiltTeensySerialPortFinder();
-            panTilt = new MiniPanTiltTeensy(teensyPort.getSerialPort());
-          } catch(IOException e) {
-            System.out.println("Are you on Linux? Did you turn off all serial port munging with stty?");
-            throw new TeensyNotFoundException(e);
-          }
-        } else {
-          // Assume that the network table host is the roborio, which is where the pan/tilt
-          // servos have to be installed in production per the rules.
-          // This limits flexibility but I am too lazy to put in another parameter.
-          System.out.println(String.format("Connecting to remote socket 2223 to host %s for MiniPanTilt...", runtimeSettings.getNTHost()));
-          panTiltSocket = new MiniPanTiltSocketProvider(runtimeSettings.getNTHost(), 2223);
-          panTilt = new MiniPanTiltSockets(panTiltSocket.getSocket());
+    // Get the image processor
+    ImageProcessor imageProcessor = new ImageProcessor(
+      pipeline, 
+      new NetworkTableWriter(
+        interpreter,
+        publishingTable)
+    );
+
+    // Init these vars outside processing loop, as they are expensive to create.
+    Mat inputImage = new Mat();
+    Mat outputImage = new Mat();
+
+    System.out.println("Processing stream...");
+
+    // Prime the image pump
+    inputImage = imagePump.pump();
+
+    // Working var to save images at end of processing if requested.
+    boolean saveImages = false;
+
+    while (!Thread.currentThread().isInterrupted() && looping) {
+      if (!inputImage.empty()) {
+        // Process the image concurrently
+        // with pumping the frame grabber for the next frame.
+        imageProcessor.processAsync(inputImage);
+        imagePump.pumpAsync();
+
+        // Await image processing to finsh
+        imageProcessor.awaitProcessCompletion();
+
+        // Update the HUD image with current state info
+        outputImage = hud.update(inputImage, publishingTable, smartDashboardTable);
+
+        // Write out the HUD image
+        imageSource.putFrame(outputImage);
+
+        // This could/should be put into a future
+        // TODO: Read state from smartdashboard in order to trigger 
+        if (saveImages) {
+          saveImages = false;
+          saveImages(inputImage, outputImage);
         }
 
-        System.out.println("MiniPanTilt connected.");
-
-        // Just P works pretty well
-        MiniPID pidX = new MiniPID(.32, 0, 0);
-        MiniPID pidY = new MiniPID(.32, 0, 0);
-        HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotator, interpreter, pidX, pidY, panTilt);
-
-        // Get the image processor
-        ImageProcessor imageProcessor = new ImageProcessor(
-          pipeline, 
-          new NetworkTableWriter(
-            interpreter,
-            publishingTable,
-            panTilt)
-        );
-        
-        // Get the state machine
-        HeadsUpDisplayStateMachine stateMachine = new HeadsUpDisplayStateMachine(hud);
-
-        System.out.println("Opening socket server command port on 2222...");
-
-        Thread commandProcessorThread = null;
-
-        // Open up a server socket to listen for connections for command input
-        try(ServerSocket serverSocket = new ServerSocket(2222)) {
-
-          // Set up command processor on its own thread
-          CommandProcessor commandProcessor = new CommandProcessor(serverSocket, new CommandProcessorValueBuilder());
-          commandProcessorThread = new Thread(commandProcessor);
-          commandProcessorThread.start();
-
-          // Init these vars outside processing loop, as they are expensive to create.
-          Mat inputImage = new Mat();
-          Mat outputImage = new Mat();
-
-          System.out.println("Processing stream...");
-
-          // Prime the image pump
-          inputImage = imagePump.pump();
-
-          // Working var to save images at end of processing if requested.
-          boolean saveImages = false;
-
-          while (!Thread.currentThread().isInterrupted()) {
-            if (!inputImage.empty()) {
-              // Process the image concurrently
-              // with pumping the frame grabber for the next frame.
-              imageProcessor.processAsync(inputImage);
-              imagePump.pumpAsync();
-
-              // Await image processing to finsh
-              imageProcessor.awaitProcessCompletion();
-
-              // Fetch a user command and update HUD state machine
-              // TODO: This should be put into its own handler method.
-              if (commandProcessor.isCommandAvailable()) {
-                Command command = commandProcessor.getCommand();
-                switch (command.getCommand()) {
-                  case 'A':
-                    stateMachine.aButtonPressed();
-                    break;
-                  case 'B':
-                    stateMachine.bButtonPressed();
-                    break;
-                  case 'X':
-                    stateMachine.xButtonPressed();
-                    break;
-                  case 'Y':
-                    stateMachine.yButtonPressed();
-                    break;
-                  case 'p': // left joystick x
-                    int panPct = (int)command.getValue();
-                    stateMachine.pan(panPct);
-                    break;
-                  case 't': // left joystick y
-                    int tiltPct = (int)command.getValue();
-                    stateMachine.tilt(tiltPct);
-                    break;
-                  case 'c':
-                    stateMachine.leftThumbstickButtonPressed();
-                    break;
-                  case 'e':
-                    stateMachine.leftShoulderButtonPressed();
-                    break;
-                  case 'f': // rightShoulderButtonPressed
-                    saveImages = true;
-                    break;
-                  default:
-                    System.err.println("Command not recognized.");
-                }
-              }
-
-              // Update the HUD image with current state info
-              outputImage = hud.update(inputImage, stateMachine);
-
-              // Write out the HUD image
-              imageSource.putFrame(outputImage);
-
-              // This could/should be put into a future
-              if (saveImages) {
-                saveImages = false;
-                saveImages(inputImage, outputImage);
-              }
-
-              // Get the next image
-              inputImage = imagePump.awaitPumpCompletion();
-            } else {
-              // Get the next image, because the prior one was empty
-              inputImage = imagePump.pump();
-            }
-          }
-        } finally {
-          if (commandProcessorThread != null) {
-            commandProcessorThread.interrupt();
-          }
-        }
-      } catch (TeensyNotFoundException | CommunicationClosedException e) {
-        System.err.println("MiniPanTilt teensy not found or unexpectedly closed. Terminating.");
-        looping = false;
-      } catch (CommunicationErrorException e) {
-        e.printStackTrace();
-        System.err.println("Pan/tilt protocol error. Terminating.");
-        looping = false;
-      } catch (CommunicationFailureException | IOException e) {
-        // Assume this is because network connectivity goes down or is lost.
-        // In this case, just log, wait a bit
-        // and then go around the loop again for another connect.
-        e.printStackTrace();
-        System.out.println("Attempting to reconnect...");
-        try {
-          Thread.sleep(2000);
-        } catch (InterruptedException ie) {
-          System.out.println("Interrupt received. Exiting pan/tilt processing loop.");
-          looping = true;
-        }
-      } finally {
-        if (teensyPort != null) {
-          teensyPort.close();
-        }
-        if (panTiltSocket != null) {
-          try {
-            panTiltSocket.close();
-          } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Error closing pan/tilt socket. Terminating.");
-            looping = false;  
-          }
-        }
+        // Get the next image
+        inputImage = imagePump.awaitPumpCompletion();
+      } else {
+        // Get the next image, because the prior one was empty
+        inputImage = imagePump.pump();
       }
     }
   }
