@@ -20,7 +20,7 @@
             "stopOnEntry": false,
             "vmArgs": "-Djava.library.path=${workspaceFolder}\\..\\bin", 
             "mainClass": "Main",
-            "args": "--team 997 --nthost localhost --cameraurl http://localhost:1337/mjpeg_stream",
+            "args": "--team 997 --nthost 10.9.97.2 --cameraurl http://localhost:1337/mjpeg_stream",
             "preLaunchTask": "Local Debug Startup",
             "projectName": "CameraVision"
         },

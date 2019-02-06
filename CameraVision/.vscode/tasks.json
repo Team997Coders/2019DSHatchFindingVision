@@ -27,7 +27,7 @@
         {
             "label": "buildCameraVision",
             "type": "shell",
-            "command": "gradlew :CameraVision:build",
+            "command": "gradlew installVisionApp -x test",
             "args": [],
             "options": {
                 "cwd": "${workspaceFolder}\\.."

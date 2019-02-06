@@ -56,6 +56,7 @@ public class NetworkTableWriter implements INetworkTableWriter
       publishingTable.putNumber("cameraPitch", miniPanTilt.getAngles().getTiltAngle());
     } catch(Exception e) {
       System.out.println("Communication exception when returning angles from camera."); 
+      e.printStackTrace();
     }
   }
 
