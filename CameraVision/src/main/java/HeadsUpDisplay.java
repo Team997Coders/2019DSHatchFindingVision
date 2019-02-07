@@ -72,7 +72,8 @@ public class HeadsUpDisplay {
         hud.setState(state);
       } else if (key == "Trigger") {
         String triggerString = (String)value;
-        if (triggerString == "") {
+        System.out.println(triggerString.length());
+        if (triggerString.trim().length() == 0) {
           hud.setTrigger(null);
         } else {
           CameraControlStateMachine.Trigger trigger = Enum.valueOf(CameraControlStateMachine.Trigger.class, triggerString);   
@@ -125,11 +126,16 @@ public class HeadsUpDisplay {
       mapButtonsToTargetCenterPoints(interpreter.getHatchTargetCenters());
       // Print the button identifiers on the hatch targets
       imageAnnotator.printTargetIdentifiers(identifierToPointMap);
+      // Write the selectable target triggers to network tables so the state machine
+      // knows which targets (and thus which buttons) are selectable
       ArrayList<String> triggers = new ArrayList<String>();
       buttonToPointMap.keySet().forEach((key) -> triggers.add(key.toString()));
       String[] triggersArray = new String[triggers.size()];
       triggersArray = triggers.toArray(triggersArray);
       visionNetworkTable.putStringArray("SelectableTargetTriggers", triggersArray);
+      // Clear the selected target
+      SelectedTarget selectedTarget = new SelectedTarget(visionNetworkTable);
+      selectedTarget.clear();
     } else if (state == CameraControlStateMachine.State.SlewingToTarget) {
       try {
         // Update the known center of the selected target from the last known point
@@ -152,21 +158,48 @@ public class HeadsUpDisplay {
         // If the slewpoint is null, just flip back to identifying targets
         visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.IdentifyTargets.toString());
       }
-    }
-    /*
-    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.TargetLocked) {
+    } else if (state == CameraControlStateMachine.State.TargetLocked) {
       try {
         // Update the known center of the selected target from the last known point
         HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
         slewPoint = hatchTarget.targetRectangle().center;
         // Draw the targeting rectangle showing we are locked
         imageAnnotator.drawLockedRectangle(slewPoint);
-        // Continuing slewing camera to get selected target in center of FOV
-        slewTargetToCenter(0);
+        // Print information about target
+        imageAnnotator.printTargetInfo(panAngle);
+        // Continue writing the selected target information to network tables
+        SelectedTarget selectedTarget = new SelectedTarget(visionNetworkTable);
+        Point normalizedPointFromCenter = interpreter.getNormalizedTargetPositionFromCenter(slewPoint);
+        selectedTarget.write(hatchTarget.rangeInInches(), 
+            panAngle, 
+            Math.toDegrees(hatchTarget.aspectAngleInRadians()), 
+            normalizedPointFromCenter.x, 
+            normalizedPointFromCenter.y);
       } catch (TargetNotFoundException e) {
         // We can no longer find a target containing our selected target point.
-        stateMachine.loseLock();
+        visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.LoseLock.toString());
       }
+    } else if (state == CameraControlStateMachine.State.LockFailed) {
+      // TODO: Give visual indication to user that lock failed
+      // Print something to the screen for 1-2 seconds
+      // Clear the selected target
+      SelectedTarget selectedTarget = new SelectedTarget(visionNetworkTable);
+      selectedTarget.clear();
+      visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.IdentifyTargets.toString());
+    } else if (state == CameraControlStateMachine.State.LockLost) {
+      // TODO: Give visual indication to user that lock was lost
+      // Print something to the screen for 1-2 seconds
+      // Clear the selected target
+      SelectedTarget selectedTarget = new SelectedTarget(visionNetworkTable);
+      selectedTarget.clear();
+      visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.IdentifyTargets.toString());
+    } else if (state == CameraControlStateMachine.State.Calibrating) {
+      // Clear the selected target
+      SelectedTarget selectedTarget = new SelectedTarget(visionNetworkTable);
+      selectedTarget.clear();
+      imageAnnotator.drawCalibrationInformation();
+    }
+/*
     } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.DrivingToTarget) {
       try {
         // Update the known center of the selected target from the last known point
@@ -206,15 +239,6 @@ public class HeadsUpDisplay {
       stateMachine.identifyTargets();
     } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.Calibrating) {
       imageAnnotator.drawCalibrationInformation();
-    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.LockFailed) {
-      // TODO: Give visual indication to user that lock failed
-      // Print something to the screen for 1-2 seconds
-      stateMachine.identifyTargets();
-    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.LockLost) {
-      // TODO: Give visual indication to user that lock was lost
-      // Print something to the screen for 1-2 seconds
-      stateMachine.identifyTargets();
-    }
 */
     return imageAnnotator.getCompletedAnnotation();
   }

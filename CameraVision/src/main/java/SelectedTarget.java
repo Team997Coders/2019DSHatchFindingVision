@@ -8,6 +8,7 @@ public class SelectedTarget {
   private final static String CAMERAANGLEINDEGREES = "CameraAngleInDegrees";
   private final static String ANGLETOTARGETINDEGREES = "AngleToTargetInDegrees";
   private final static String NORMALIZEDPOINTFROMCENTER = "NormalizedPointFromCenter";
+  private final static String ACTIVE = "Active";
   private final static String NORMALIZEDPOINTFROMCENTERX = "X";
   private final static String NORMALIZEDPOINTFROMCENTERY = "Y";
 
@@ -25,8 +26,15 @@ public class SelectedTarget {
     selectedTargetTable.putNumber(RANGEININCHESKEY, rangeInInches);
     selectedTargetTable.putNumber(CAMERAANGLEINDEGREES, cameraAngleInDegrees);
     selectedTargetTable.putNumber(ANGLETOTARGETINDEGREES, angleToTargetInDegrees);
+    selectedTargetTable.putBoolean(ACTIVE, true);
     ITable normalizedPointFromCenterTable = selectedTargetTable.getSubTable(NORMALIZEDPOINTFROMCENTER);
     normalizedPointFromCenterTable.putNumber(NORMALIZEDPOINTFROMCENTERX, normalizedPointFromCenterX);
     normalizedPointFromCenterTable.putNumber(NORMALIZEDPOINTFROMCENTERY, normalizedPointFromCenterY);
+  }
+
+  public void clear() {
+    write(0, 0, 0, 0, 0);
+    ITable selectedTargetTable = visionNetworkTable.getSubTable(SELECTEDTARGETKEY);
+    selectedTargetTable.putBoolean(ACTIVE, false);
   }
 }
