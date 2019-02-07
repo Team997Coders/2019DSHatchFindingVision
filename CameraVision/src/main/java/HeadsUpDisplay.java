@@ -149,6 +149,7 @@ public class HeadsUpDisplay {
         // We can no longer find a target containing our selected target point.
         visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.FailedToLock.toString());
       } catch (NullPointerException e) {
+        // If the slewpoint is null, just flip back to identifying targets
         visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.IdentifyTargets.toString());
       }
     }

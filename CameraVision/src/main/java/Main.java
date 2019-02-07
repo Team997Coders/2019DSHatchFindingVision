@@ -4,8 +4,6 @@ import edu.wpi.first.wpilibj.networktables.*;
 import edu.wpi.first.wpilibj.tables.*;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.ServerSocket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
