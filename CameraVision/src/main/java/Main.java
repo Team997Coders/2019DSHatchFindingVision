@@ -112,7 +112,7 @@ public class Main {
     // Flag to indicate whether to continue looping
     boolean looping = true;
 
-    HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotator, interpreter);
+    HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotator, interpreter, publishingTable, smartDashboardTable);
 
     // Get the image processor
     ImageProcessor imageProcessor = new ImageProcessor(
@@ -145,7 +145,7 @@ public class Main {
         imageProcessor.awaitProcessCompletion();
 
         // Update the HUD image with current state info
-        outputImage = hud.update(inputImage, publishingTable, smartDashboardTable);
+        outputImage = hud.update(inputImage);
 
         // Write out the HUD image
         imageSource.putFrame(outputImage);

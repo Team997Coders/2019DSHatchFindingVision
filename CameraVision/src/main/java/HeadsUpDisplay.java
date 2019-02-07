@@ -7,6 +7,8 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
+import edu.wpi.first.wpilibj.tables.ITable;
+import edu.wpi.first.wpilibj.tables.ITableListener;
 
 /**
  * Encapsulate logic to produce a targeting display that responds to
@@ -19,7 +21,10 @@ public class HeadsUpDisplay {
   private Map<String, Point> identifierToPointMap = new HashMap<String, Point>();
   private final Map<CameraControlStateMachine.Trigger, String> buttonToIdentifierMap = new HashMap<>();
   private Point slewPoint;
-  private CameraControlStateMachine.State lastState;
+  private CameraControlStateMachine.State state;
+  private CameraControlStateMachine.Trigger trigger;
+  private final NetworkTable smartDashboard;
+  private final NetworkTable visionNetworkTable;
   
   /**
    * Constructor for the HUD taking a reference to an annotator and interpreter and camera control.
@@ -30,7 +35,9 @@ public class HeadsUpDisplay {
    * @param panTilt         The panTilt servos controlling the camera position.
    */
   public HeadsUpDisplay(ImageAnnotator imageAnnotator, 
-      HatchTargetPipelineInterpreter interpreter) {
+      HatchTargetPipelineInterpreter interpreter, 
+      NetworkTable visionNetworkTable, 
+      NetworkTable smartDashboard) {
     if (imageAnnotator == null) {
       throw new IllegalArgumentException("Image annotator cannot be null.");
     }
@@ -39,7 +46,59 @@ public class HeadsUpDisplay {
     }
     this.imageAnnotator = imageAnnotator;
     this.interpreter = interpreter;
+    this.smartDashboard = smartDashboard;
+    this.visionNetworkTable = visionNetworkTable;
+    this.state = CameraControlStateMachine.State.IdentifyingTargets;
+    this.trigger = null;
     mapButtonsToIdentifiers();
+    wireUpNetworkTableListeners();
+  }
+
+  protected class StateChangeListener implements ITableListener {
+    private HeadsUpDisplay hud;
+
+    public StateChangeListener(HeadsUpDisplay hud) {
+      this.hud = hud;
+    }
+
+    @Override
+    public void valueChanged(ITable table, String key, Object value, boolean isNew) {
+      if (key == "State") {
+        String stateString = (String)value;
+        if (stateString == "") {
+          stateString = "IdentifyingTargets";
+        }
+        CameraControlStateMachine.State state = Enum.valueOf(CameraControlStateMachine.State.class, stateString);
+        hud.setState(state);
+      } else if (key == "Trigger") {
+        String triggerString = (String)value;
+        if (triggerString == "") {
+          hud.setTrigger(null);
+        } else {
+          CameraControlStateMachine.Trigger trigger = Enum.valueOf(CameraControlStateMachine.Trigger.class, triggerString);   
+          hud.setTrigger(trigger);       
+        }
+      }
+    }
+  }
+
+  protected void setState(CameraControlStateMachine.State state) {
+    this.state = state;
+  }
+
+  protected void setTrigger(CameraControlStateMachine.Trigger trigger) {
+    this.trigger = trigger;
+    // Reset the slewpoint if we have a trigger value
+    if (trigger != null) {
+      // Translate to slew point
+      slewPoint = buttonToPointMap.get(trigger);
+    }
+  }
+
+  public void wireUpNetworkTableListeners() {
+    StateChangeListener listener = new StateChangeListener(this);
+    visionNetworkTable.addTableListener("State", listener, true);
+    visionNetworkTable.addTableListener("Trigger", listener, true);
   }
 
   /**
@@ -51,25 +110,14 @@ public class HeadsUpDisplay {
    * @return                    Return the annotated image.
    * @throws FailedToLock       Thrown if target failed to lock on.
    */
-  public Mat update(Mat inputImage, NetworkTable visionNetworkTable, NetworkTable smartDashboard) { 
+  public Mat update(Mat inputImage) { 
     imageAnnotator.beginAnnotation(inputImage);
 
-    CameraControlStateMachine.State thisState = Enum.valueOf(CameraControlStateMachine.State.class, visionNetworkTable.getString("State", "IdentifyingTargets"));
+    
     int panAngle = (int) Math.round(Math.abs(smartDashboard.getNumber("Camera Pan Angle", 90) - 90));
 
-    // Reset the slewpoint if state change occurred and we have a trigger value
-    String triggerString = visionNetworkTable.getString("Trigger", "");
-    if (triggerString != "") {
-      // Get the selected target
-      CameraControlStateMachine.Trigger trigger = Enum.valueOf(CameraControlStateMachine.Trigger.class, visionNetworkTable.getString("Trigger", "AButton"));
-      // Translate to slew point
-      slewPoint = buttonToPointMap.get(trigger);
-      // Clear trigger value
-      visionNetworkTable.putString("Trigger", "");
-    }
-
     // Look at current state machine state and act
-    if (thisState == CameraControlStateMachine.State.IdentifyingTargets) {
+    if (state == CameraControlStateMachine.State.IdentifyingTargets) {
       imageAnnotator.drawTargetingRectangles();
       imageAnnotator.drawHatchTargetRectangles();
       imageAnnotator.printTargetInfo(panAngle);
@@ -79,17 +127,29 @@ public class HeadsUpDisplay {
       imageAnnotator.printTargetIdentifiers(identifierToPointMap);
       ArrayList<String> triggers = new ArrayList<String>();
       buttonToPointMap.keySet().forEach((key) -> triggers.add(key.toString()));
-      visionNetworkTable.putStringArray("SelectableTargetTriggers", (String[])triggers.toArray());
-    } else if (thisState == CameraControlStateMachine.State.SlewingToTarget) {
+      String[] triggersArray = new String[triggers.size()];
+      triggersArray = triggers.toArray(triggersArray);
+      visionNetworkTable.putStringArray("SelectableTargetTriggers", triggersArray);
+    } else if (state == CameraControlStateMachine.State.SlewingToTarget) {
       try {
         // Update the known center of the selected target from the last known point
         HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
         slewPoint = hatchTarget.targetRectangle().center;
         // Draw the targeting rectangle being slewed
         imageAnnotator.drawSlewingRectangle(slewPoint);
+        // Write the selected target information to network tables
+        SelectedTarget selectedTarget = new SelectedTarget(visionNetworkTable);
+        Point normalizedPointFromCenter = interpreter.getNormalizedTargetPositionFromCenter(slewPoint);
+        selectedTarget.write(hatchTarget.rangeInInches(), 
+            panAngle, 
+            Math.toDegrees(hatchTarget.aspectAngleInRadians()), 
+            normalizedPointFromCenter.x, 
+            normalizedPointFromCenter.y);
       } catch (TargetNotFoundException e) {
         // We can no longer find a target containing our selected target point.
-        visionNetworkTable.putString("RequestedState", CameraControlStateMachine.State.LockFailed.toString());
+        visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.FailedToLock.toString());
+      } catch (NullPointerException e) {
+        visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.IdentifyTargets.toString());
       }
     }
     /*
@@ -155,7 +215,6 @@ public class HeadsUpDisplay {
       stateMachine.identifyTargets();
     }
 */
-    lastState = thisState;
     return imageAnnotator.getCompletedAnnotation();
   }
 
