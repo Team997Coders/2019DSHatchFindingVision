@@ -1,4 +1,3 @@
-import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,7 +71,6 @@ public class HeadsUpDisplay {
         hud.setState(state);
       } else if (key == "Trigger") {
         String triggerString = (String)value;
-        System.out.println(triggerString.length());
         if (triggerString.trim().length() == 0) {
           hud.setTrigger(null);
         } else {
@@ -150,7 +148,8 @@ public class HeadsUpDisplay {
             panAngle, 
             Math.toDegrees(hatchTarget.aspectAngleInRadians()), 
             normalizedPointFromCenter.x, 
-            normalizedPointFromCenter.y);
+            normalizedPointFromCenter.y,
+            false);
       } catch (TargetNotFoundException e) {
         // We can no longer find a target containing our selected target point.
         visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.FailedToLock.toString());
@@ -174,7 +173,8 @@ public class HeadsUpDisplay {
             panAngle, 
             Math.toDegrees(hatchTarget.aspectAngleInRadians()), 
             normalizedPointFromCenter.x, 
-            normalizedPointFromCenter.y);
+            normalizedPointFromCenter.y,
+            false);
       } catch (TargetNotFoundException e) {
         // We can no longer find a target containing our selected target point.
         visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.LoseLock.toString());
@@ -198,48 +198,28 @@ public class HeadsUpDisplay {
       SelectedTarget selectedTarget = new SelectedTarget(visionNetworkTable);
       selectedTarget.clear();
       imageAnnotator.drawCalibrationInformation();
-    }
-/*
-    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.DrivingToTarget) {
+    } else if (state == CameraControlStateMachine.State.DrivingToTarget) {
       try {
         // Update the known center of the selected target from the last known point
         HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
         slewPoint = hatchTarget.targetRectangle().center;
         // Draw the targeting rectangle indicating that driving is in progress
         imageAnnotator.drawDrivingRectangle(slewPoint);
-        // Continuing slewing camera to get selected target in center of FOV
-        slewTargetToCenter(0);
-        //TODO: FEED NETWORK TABLES TRACKING INFORMATION
-        //TODO: ALSO, ONCE THIS STATE EXITS, THEN NT SHOULD BE CLEARED.
+        // Continue writing the selected target information to network tables
+        SelectedTarget selectedTarget = new SelectedTarget(visionNetworkTable);
+        Point normalizedPointFromCenter = interpreter.getNormalizedTargetPositionFromCenter(slewPoint);
+        selectedTarget.write(hatchTarget.rangeInInches(), 
+            panAngle, 
+            Math.toDegrees(hatchTarget.aspectAngleInRadians()), 
+            normalizedPointFromCenter.x, 
+            normalizedPointFromCenter.y,
+            true);
       } catch (TargetNotFoundException e) {
         // We can no longer find a target containing our selected target point.
-        stateMachine.loseLock();
+        visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.LoseLock.toString());
       }
-    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.Panning) {
-      imageAnnotator.drawTargetingRectangles();
-      imageAnnotator.drawHatchTargetRectangles();
-      pan(stateMachine.getPanPct());
-      if (stateMachine.getPanPct() == 0) {
-        stateMachine.identifyTargets();
-      }
-    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.Tilting) {
-      imageAnnotator.drawTargetingRectangles();
-      imageAnnotator.drawHatchTargetRectangles();
-      tilt(stateMachine.getTiltPct());
-      if (stateMachine.getTiltPct() == 0) {
-        stateMachine.identifyTargets();
-      }
-    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.Centering) {
-      // TODO: Something is up with centering. Pressing button always causes a fire of the state machine
-      // but the pan/tilt does not always respond. Probably some issue between this app and
-      // the pan/tilt and/or the firmware.
-      imageAnnotator.drawTargetingRectangles();
-      imageAnnotator.drawHatchTargetRectangles();
-      center();
-      stateMachine.identifyTargets();
-    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.Calibrating) {
-      imageAnnotator.drawCalibrationInformation();
-*/
+    }
+
     return imageAnnotator.getCompletedAnnotation();
   }
 
