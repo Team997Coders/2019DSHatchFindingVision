@@ -19,6 +19,7 @@ public class HeadsUpDisplay {
   private Map<String, Point> identifierToPointMap = new HashMap<String, Point>();
   private final Map<CameraControlStateMachine.Trigger, String> buttonToIdentifierMap = new HashMap<>();
   private Point slewPoint;
+  private CameraControlStateMachine.State lastState;
   
   /**
    * Constructor for the HUD taking a reference to an annotator and interpreter and camera control.
@@ -44,20 +45,29 @@ public class HeadsUpDisplay {
   /**
    * Update the image processing display and camera mount based on current state of state machine.
    * 
-   * @param inputImage    The inputImage to annotate.
-   * @param currentState  The vision network table.
-   * @param smartDashboard The smartdashboard network table.
-   * @return              Return the annotated image.
-   * @throws FailedToLock Thrown if target failed to lock on.
+   * @param inputImage          The inputImage to annotate.
+   * @param visionNetworkTable  The vision network table.
+   * @param smartDashboard      The smartdashboard network table.
+   * @return                    Return the annotated image.
+   * @throws FailedToLock       Thrown if target failed to lock on.
    */
   public Mat update(Mat inputImage, NetworkTable visionNetworkTable, NetworkTable smartDashboard) { 
     imageAnnotator.beginAnnotation(inputImage);
 
-    String state = visionNetworkTable.getString("State", "");
-    int panAngle = (int) Math.round(Math.abs(smartDashboard.getDouble("Camera Pan Angle", 90) - 90));
-    // TODO: Clean up this long stanza by breaking up each state implementation into its
-    // own method.
-    if (state == "IdentifyingTargets") {
+    CameraControlStateMachine.State thisState = Enum.valueOf(CameraControlStateMachine.State.class, visionNetworkTable.getString("State", "IdentifyingTargets"));
+    int panAngle = (int) Math.round(Math.abs(smartDashboard.getNumber("Camera Pan Angle", 90) - 90));
+
+    // Reset the slewpoint if state change occurred and we have a trigger value
+    String triggerString = visionNetworkTable.getString("Trigger", "");
+    if (lastState != thisState && triggerString != "") {
+      // Get the selected target
+      CameraControlStateMachine.Trigger trigger = Enum.valueOf(CameraControlStateMachine.Trigger.class, visionNetworkTable.getString("Trigger", "AButton"));
+      // Translate to slew point
+      slewPoint = buttonToPointMap.get(trigger);
+    }
+
+    // Look at current state machine state and act
+    if (thisState == CameraControlStateMachine.State.IdentifyingTargets) {
       imageAnnotator.drawTargetingRectangles();
       imageAnnotator.drawHatchTargetRectangles();
       imageAnnotator.printTargetInfo(panAngle);
@@ -68,24 +78,19 @@ public class HeadsUpDisplay {
       ArrayList<String> triggers = new ArrayList<String>();
       buttonToPointMap.keySet().forEach((key) -> triggers.add(key.toString()));
       visionNetworkTable.putStringArray("SelectableTargetTriggers", (String[])triggers.toArray());
-    }
-/*
-    } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.SlewingToTarget) {
+    } else if (thisState == CameraControlStateMachine.State.SlewingToTarget) {
       try {
         // Update the known center of the selected target from the last known point
         HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
         slewPoint = hatchTarget.targetRectangle().center;
         // Draw the targeting rectangle being slewed
         imageAnnotator.drawSlewingRectangle(slewPoint);
-        // Continuing slewing camera to get selected target in center of FOV
-        // Use 5% error to call it aligned...may be too much but it locks faster
-        if (slewTargetToCenter(0.05)) {
-          stateMachine.lockOn();
-        }
       } catch (TargetNotFoundException e) {
         // We can no longer find a target containing our selected target point.
-        stateMachine.failedToLock();
+        visionNetworkTable.putString("RequestedState", CameraControlStateMachine.State.LockFailed.toString());
       }
+    }
+    /*
     } else if (stateMachine.getState() == HeadsUpDisplayStateMachine.State.TargetLocked) {
       try {
         // Update the known center of the selected target from the last known point
@@ -148,6 +153,7 @@ public class HeadsUpDisplay {
       stateMachine.identifyTargets();
     }
 */
+    lastState = thisState;
     return imageAnnotator.getCompletedAnnotation();
   }
 
