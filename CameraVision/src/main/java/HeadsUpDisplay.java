@@ -59,11 +59,13 @@ public class HeadsUpDisplay {
 
     // Reset the slewpoint if state change occurred and we have a trigger value
     String triggerString = visionNetworkTable.getString("Trigger", "");
-    if (lastState != thisState && triggerString != "") {
+    if (triggerString != "") {
       // Get the selected target
       CameraControlStateMachine.Trigger trigger = Enum.valueOf(CameraControlStateMachine.Trigger.class, visionNetworkTable.getString("Trigger", "AButton"));
       // Translate to slew point
       slewPoint = buttonToPointMap.get(trigger);
+      // Clear trigger value
+      visionNetworkTable.putString("Trigger", "");
     }
 
     // Look at current state machine state and act
