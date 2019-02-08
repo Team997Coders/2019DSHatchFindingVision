@@ -21,7 +21,6 @@ public class HeadsUpDisplay {
   private final Map<CameraControlStateMachine.Trigger, String> buttonToIdentifierMap = new HashMap<>();
   private Point slewPoint;
   private CameraControlStateMachine.State state;
-  private CameraControlStateMachine.Trigger trigger;
   private final NetworkTable smartDashboard;
   private final NetworkTable visionNetworkTable;
   
@@ -48,7 +47,6 @@ public class HeadsUpDisplay {
     this.smartDashboard = smartDashboard;
     this.visionNetworkTable = visionNetworkTable;
     this.state = CameraControlStateMachine.State.IdentifyingTargets;
-    this.trigger = null;
     mapButtonsToIdentifiers();
     wireUpNetworkTableListeners();
   }
@@ -72,10 +70,10 @@ public class HeadsUpDisplay {
       } else if (key == "Trigger") {
         String triggerString = (String)value;
         if (triggerString.trim().length() == 0) {
-          hud.setTrigger(null);
+          hud.selectTarget(null);
         } else {
           CameraControlStateMachine.Trigger trigger = Enum.valueOf(CameraControlStateMachine.Trigger.class, triggerString);   
-          hud.setTrigger(trigger);       
+          hud.selectTarget(trigger);       
         }
       }
     }
@@ -85,8 +83,7 @@ public class HeadsUpDisplay {
     this.state = state;
   }
 
-  protected void setTrigger(CameraControlStateMachine.Trigger trigger) {
-    this.trigger = trigger;
+  protected void selectTarget(CameraControlStateMachine.Trigger trigger) {
     // Reset the slewpoint if we have a trigger value
     if (trigger != null) {
       // Translate to slew point
@@ -148,8 +145,7 @@ public class HeadsUpDisplay {
             panAngle, 
             Math.toDegrees(hatchTarget.aspectAngleInRadians()), 
             normalizedPointFromCenter.x, 
-            normalizedPointFromCenter.y,
-            false);
+            normalizedPointFromCenter.y);
       } catch (TargetNotFoundException e) {
         // We can no longer find a target containing our selected target point.
         visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.FailedToLock.toString());
@@ -173,8 +169,7 @@ public class HeadsUpDisplay {
             panAngle, 
             Math.toDegrees(hatchTarget.aspectAngleInRadians()), 
             normalizedPointFromCenter.x, 
-            normalizedPointFromCenter.y,
-            false);
+            normalizedPointFromCenter.y);
       } catch (TargetNotFoundException e) {
         // We can no longer find a target containing our selected target point.
         visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.LoseLock.toString());
@@ -212,8 +207,7 @@ public class HeadsUpDisplay {
             panAngle, 
             Math.toDegrees(hatchTarget.aspectAngleInRadians()), 
             normalizedPointFromCenter.x, 
-            normalizedPointFromCenter.y,
-            true);
+            normalizedPointFromCenter.y);
       } catch (TargetNotFoundException e) {
         // We can no longer find a target containing our selected target point.
         visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.LoseLock.toString());
@@ -247,7 +241,7 @@ public class HeadsUpDisplay {
           break;
         default:
           // TODO: Do nothing for now...should the HUD say "more targets" and provide a way to get to them?
-          // Or is 4 targets enough?
+          // Or is 4 targets enough? Plenty I am sure....
       }
       buttonIndex +=1;
     }
