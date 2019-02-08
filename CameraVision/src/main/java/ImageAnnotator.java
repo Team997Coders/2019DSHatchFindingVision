@@ -92,21 +92,36 @@ public class ImageAnnotator {
     }
   }*/
 
-  public void printTargetInfo(double horizontalViewAngleInDegrees) {
+  private Point getBottomLeftPointFromRotatedRect(RotatedRect rotatedRect) {
+    Point[] vertices = new Point[4];
+    rotatedRect.points(vertices);
+    double x = 10000;
+    double y = 0;
+    // Get the smallest x and the greatest y.
+    for (Point point : vertices) {
+      x = point.x < x ? point.x : x;
+      y = point.y > y ? point.y : y;
+    }
+    return new Point(x, y);
+  }
+
+  public void printTargetInfo(double cameraAngleInDegrees) {
     for (HatchTarget hatchTarget: interpreter.getHatchTargets()) {
-      Point[] vertices = new Point[4];
       RotatedRect rotatedRect = hatchTarget.targetRectangle();
-      rotatedRect.points(vertices);
-      Point textStart = vertices[0];
+      Point textStart = getBottomLeftPointFromRotatedRect(rotatedRect);
 
       textStart.y += 10;
       long distance = Math.round(hatchTarget.rangeInInches() * 10);
       double roundedDistance = ((double)distance)/10;
       long angleFromTarget = Math.round(Math.toDegrees(hatchTarget.aspectAngleInRadians()) * 10);
       double roundedAngle = ((double)angleFromTarget / 10);
+      long cameraAngleInDegreesTimes10 = Math.round(cameraAngleInDegrees * 10);
+      double cameraAngleInDegreesRounded = ((double)cameraAngleInDegreesTimes10 /10);
       Imgproc.putText(outputImage, "distance: " + Double.toString(roundedDistance), textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
-      textStart.y += 10;
-      Imgproc.putText(outputImage, "angleOffset: " + Double.toString(roundedAngle), textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
+      textStart.y += 15;
+      Imgproc.putText(outputImage, "angleFromTgt: " + Double.toString(roundedAngle), textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
+      textStart.y += 15;
+      Imgproc.putText(outputImage, "cameraAngle: " + Double.toString(cameraAngleInDegreesRounded), textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
     }
   }
 
