@@ -161,7 +161,7 @@ public class HeadsUpDisplay {
         // Draw the targeting rectangle showing we are locked
         imageAnnotator.drawLockedRectangle(slewPoint);
         // Print information about target
-        imageAnnotator.printTargetInfo(panAngle);
+        imageAnnotator.printTargetInfo(hatchTarget, panAngle);
         // Continue writing the selected target information to network tables
         SelectedTarget selectedTarget = new SelectedTarget(visionNetworkTable);
         Point normalizedPointFromCenter = interpreter.getNormalizedTargetPositionFromCenter(slewPoint);
@@ -200,6 +200,8 @@ public class HeadsUpDisplay {
         slewPoint = hatchTarget.targetRectangle().center;
         // Draw the targeting rectangle indicating that driving is in progress
         imageAnnotator.drawDrivingRectangle(slewPoint);
+        // Print information about target
+        imageAnnotator.printTargetInfo(hatchTarget, panAngle);
         // Continue writing the selected target information to network tables
         SelectedTarget selectedTarget = new SelectedTarget(visionNetworkTable);
         Point normalizedPointFromCenter = interpreter.getNormalizedTargetPositionFromCenter(slewPoint);
