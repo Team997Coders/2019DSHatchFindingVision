@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.HashMap;
 
-import edu.wpi.first.wpilibj.vision.VisionPipeline;
-
 import org.opencv.core.*;
 import org.opencv.core.Core.*;
 import org.opencv.features2d.FeatureDetector;
@@ -23,7 +21,7 @@ import org.opencv.objdetect.*;
 *
 * @author GRIP
 */
-public class HatchTargetPipelineLifecam implements VisionPipeline {
+public class HatchTargetPipelineLifecam implements IHatchTargetPipeline {
 
 	//Outputs
 	private Mat hsvThresholdOutput = new Mat();

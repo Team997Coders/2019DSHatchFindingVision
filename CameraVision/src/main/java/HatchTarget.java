@@ -71,8 +71,10 @@ public class HatchTarget {
     //System.out.println("  leftAngle: " + leftRectangle.angle + ", rightAngle: " + rightRectangle.angle);
     
     // The rectangles shouldn't be tilted more than around 20deg.
-    if ((pxToInchesConversion(center().x) * Math.abs(leftRectangle.center.y - rightRectangle.center.y)) > 2) {
-//      System.out.println("Target is tilted by too much.");
+//    if ((pxToInchesConversion(center().x) * Math.abs(leftRectangle.center.y - rightRectangle.center.y)) > 2) {
+    // This was a little too restrictive, so relax a little bit.
+    if ((pxToInchesConversion(center().x) * Math.abs(leftRectangle.center.y - rightRectangle.center.y)) > 3) {
+    //      System.out.println("Target is tilted by too much.");
       throw new TargetRectanglesException("Target rectangles are tilted by too much.");
     }
 

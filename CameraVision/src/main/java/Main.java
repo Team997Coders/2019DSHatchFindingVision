@@ -43,7 +43,7 @@ public class Main {
     CameraParameters cameraParameters = new Lifecam5000CameraParameters();
 
     // Wire up the pipeline to use for image processing
-    IHatchTargetPipeline pipeline = new Lifecam5000HatchTargetPipeline();
+    IHatchTargetPipeline pipeline = new HatchTargetPipelineLifecam();
 
     if (!runtimeSettings.getNoNT()) {
       NetworkTable.setClientMode();

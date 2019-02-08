@@ -7,6 +7,7 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 /**
@@ -166,7 +167,16 @@ public class HatchTargetPipelineInterpreter {
 
 	public HatchTarget getHatchTargetFromPoint(Point point) throws TargetNotFoundException {
     for (HatchTarget hatchTarget: getHatchTargets()) {
-      if (hatchTarget.targetRectangle().boundingRect().contains(point)) {
+      // Upsize the rotated rectangle by 30% to add some slop for slewing
+      double upsizeFactor = 1.3;
+      RotatedRect originalRectangle = hatchTarget.targetRectangle();
+
+      RotatedRect upsizedRectangle = new RotatedRect(
+        new Point(originalRectangle.center.x, originalRectangle.center.y),
+        new Size(originalRectangle.size.height * upsizeFactor, originalRectangle.size.width * upsizeFactor), 
+        originalRectangle.angle);
+
+      if (upsizedRectangle.boundingRect().contains(point)) {
         return hatchTarget;
       }
     }
