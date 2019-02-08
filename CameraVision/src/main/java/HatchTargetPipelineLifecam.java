@@ -21,16 +21,10 @@ import org.opencv.objdetect.*;
 *
 * @author GRIP
 */
-public class HatchTargetPipelineLifecam {
+public class HatchTargetPipelineLifecam implements IHatchTargetPipeline {
 
 	//Outputs
-	private Mat desaturateOutput = new Mat();
-	private Mat normalizeOutput = new Mat();
-	private Mat cvThresholdOutput = new Mat();
-	private Mat hsvThreshold0Output = new Mat();
-	private Mat hsvThreshold1Output = new Mat();
-	private Mat cvAddOutput = new Mat();
-	private Mat cvMultiplyOutput = new Mat();
+	private Mat hsvThresholdOutput = new Mat();
 	private ArrayList<MatOfPoint> findContoursOutput = new ArrayList<MatOfPoint>();
 	private ArrayList<MatOfPoint> filterContoursOutput = new ArrayList<MatOfPoint>();
 
@@ -41,64 +35,28 @@ public class HatchTargetPipelineLifecam {
 	/**
 	 * This is the primary method that runs the entire pipeline and updates the outputs.
 	 */
-	public void process(Mat source0) {
-		// Step Desaturate0:
-		Mat desaturateInput = source0;
-		desaturate(desaturateInput, desaturateOutput);
-
-		// Step Normalize0:
-		Mat normalizeInput = desaturateOutput;
-		int normalizeType = Core.NORM_MINMAX;
-		double normalizeAlpha = 0.0;
-		double normalizeBeta = 255.0;
-		normalize(normalizeInput, normalizeType, normalizeAlpha, normalizeBeta, normalizeOutput);
-
-		// Step CV_Threshold0:
-		Mat cvThresholdSrc = normalizeOutput;
-		double cvThresholdThresh = 150.0;
-		double cvThresholdMaxval = 255.0;
-		int cvThresholdType = Imgproc.THRESH_BINARY;
-		cvThreshold(cvThresholdSrc, cvThresholdThresh, cvThresholdMaxval, cvThresholdType, cvThresholdOutput);
-
+	@Override	public void process(Mat source0) {
 		// Step HSV_Threshold0:
-		Mat hsvThreshold0Input = source0;
-		double[] hsvThreshold0Hue = {69.52810632849652, 180.0};
-		double[] hsvThreshold0Saturation = {0.0, 255.0};
-		double[] hsvThreshold0Value = {165.10791366906474, 255.0};
-		hsvThreshold(hsvThreshold0Input, hsvThreshold0Hue, hsvThreshold0Saturation, hsvThreshold0Value, hsvThreshold0Output);
-
-		// Step HSV_Threshold1:
-		Mat hsvThreshold1Input = source0;
-		double[] hsvThreshold1Hue = {0.0, 0.0};
-		double[] hsvThreshold1Saturation = {0.0, 255.0};
-		double[] hsvThreshold1Value = {0.0, 255.0};
-		hsvThreshold(hsvThreshold1Input, hsvThreshold1Hue, hsvThreshold1Saturation, hsvThreshold1Value, hsvThreshold1Output);
-
-		// Step CV_add0:
-		Mat cvAddSrc1 = hsvThreshold0Output;
-		Mat cvAddSrc2 = hsvThreshold1Output;
-		cvAdd(cvAddSrc1, cvAddSrc2, cvAddOutput);
-
-		// Step CV_multiply0:
-		Mat cvMultiplySrc1 = cvThresholdOutput;
-		Mat cvMultiplySrc2 = cvAddOutput;
-		double cvMultiplyScale = 1.0;
-		cvMultiply(cvMultiplySrc1, cvMultiplySrc2, cvMultiplyScale, cvMultiplyOutput);
+		Mat hsvThresholdInput = source0;
+		double[] hsvThresholdHue = {33.99280575539568, 100.13651877133105};
+		double[] hsvThresholdSaturation = {0.0, 255.0};
+		double[] hsvThresholdValue = {121.53776978417265, 255.0};
+		hsvThreshold(hsvThresholdInput, hsvThresholdHue, hsvThresholdSaturation, hsvThresholdValue, hsvThresholdOutput);
 
 		// Step Find_Contours0:
-		Mat findContoursInput = cvMultiplyOutput;
+		Mat findContoursInput = hsvThresholdOutput;
 		boolean findContoursExternalOnly = true;
 		findContours(findContoursInput, findContoursExternalOnly, findContoursOutput);
 
 		// Step Filter_Contours0:
 		ArrayList<MatOfPoint> filterContoursContours = findContoursOutput;
-		double filterContoursMinArea = 500.0;
+		double filterContoursMinArea = 100.0;
 		double filterContoursMinPerimeter = 0.0;
 		double filterContoursMinWidth = 0.0;
 		double filterContoursMaxWidth = 1000.0;
 		double filterContoursMinHeight = 10.0;
 		double filterContoursMaxHeight = 2000.0;
-		double[] filterContoursSolidity = {68.34532374100719, 100};
+		double[] filterContoursSolidity = {66.54676258992805, 100};
 		double filterContoursMaxVertices = 1000.0;
 		double filterContoursMinVertices = 4.0;
 		double filterContoursMinRatio = 0.0;
@@ -108,59 +66,11 @@ public class HatchTargetPipelineLifecam {
 	}
 
 	/**
-	 * This method is a generated getter for the output of a Desaturate.
-	 * @return Mat output from Desaturate.
-	 */
-	public Mat desaturateOutput() {
-		return desaturateOutput;
-	}
-
-	/**
-	 * This method is a generated getter for the output of a Normalize.
-	 * @return Mat output from Normalize.
-	 */
-	public Mat normalizeOutput() {
-		return normalizeOutput;
-	}
-
-	/**
-	 * This method is a generated getter for the output of a CV_Threshold.
-	 * @return Mat output from CV_Threshold.
-	 */
-	public Mat cvThresholdOutput() {
-		return cvThresholdOutput;
-	}
-
-	/**
 	 * This method is a generated getter for the output of a HSV_Threshold.
 	 * @return Mat output from HSV_Threshold.
 	 */
-	public Mat hsvThreshold0Output() {
-		return hsvThreshold0Output;
-	}
-
-	/**
-	 * This method is a generated getter for the output of a HSV_Threshold.
-	 * @return Mat output from HSV_Threshold.
-	 */
-	public Mat hsvThreshold1Output() {
-		return hsvThreshold1Output;
-	}
-
-	/**
-	 * This method is a generated getter for the output of a CV_add.
-	 * @return Mat output from CV_add.
-	 */
-	public Mat cvAddOutput() {
-		return cvAddOutput;
-	}
-
-	/**
-	 * This method is a generated getter for the output of a CV_multiply.
-	 * @return Mat output from CV_multiply.
-	 */
-	public Mat cvMultiplyOutput() {
-		return cvMultiplyOutput;
+	public Mat hsvThresholdOutput() {
+		return hsvThresholdOutput;
 	}
 
 	/**
@@ -181,53 +91,6 @@ public class HatchTargetPipelineLifecam {
 
 
 	/**
-	 * Converts a color image into shades of grey.
-	 * @param input The image on which to perform the desaturate.
-	 * @param output The image in which to store the output.
-	 */
-	private void desaturate(Mat input, Mat output) {
-		switch (input.channels()) {
-			case 1:
-				// If the input is already one channel, it's already desaturated
-				input.copyTo(output);
-				break;
-			case 3:
-				Imgproc.cvtColor(input, output, Imgproc.COLOR_BGR2GRAY);
-				break;
-			case 4:
-				Imgproc.cvtColor(input, output, Imgproc.COLOR_BGRA2GRAY);
-				break;
-			default:
-				throw new IllegalArgumentException("Input to desaturate must have 1, 3, or 4 channels");
-		}
-	}
-
-	/**
-	 * Normalizes or remaps the values of pixels in an image.
-	 * @param input The image on which to perform the Normalize.
-	 * @param type The type of normalization.
-	 * @param a The minimum value.
-	 * @param b The maximum value.
-	 * @param output The image in which to store the output.
-	 */
-	private void normalize(Mat input, int type, double a, double b, Mat output) {
-		Core.normalize(input, output, a, b, type);
-	}
-
-	/**
-	 * Apply a fixed-level threshold to each array element in an image.
-	 * @param src Image to threshold.
-	 * @param threshold threshold value.
-	 * @param maxVal Maximum value for THRES_BINARY and THRES_BINARY_INV
-	 * @param type Type of threshold to appy.
-	 * @param dst output Image.
-	 */
-	private void cvThreshold(Mat src, double threshold, double maxVal, int type,
-		Mat dst) {
-		Imgproc.threshold(src, dst, threshold, maxVal, type);
-	}
-
-	/**
 	 * Segment an image based on hue, saturation, and value ranges.
 	 *
 	 * @param input The image on which to perform the HSL threshold.
@@ -241,27 +104,6 @@ public class HatchTargetPipelineLifecam {
 		Imgproc.cvtColor(input, out, Imgproc.COLOR_BGR2HSV);
 		Core.inRange(out, new Scalar(hue[0], sat[0], val[0]),
 			new Scalar(hue[1], sat[1], val[1]), out);
-	}
-
-	/**
-	 * Calculates the sum of two Mats.
-	 * @param src1 the first Mat
-	 * @param src2 the second Mat
-	 * @param out the Mat that is the sum of the two Mats
-	 */
-	private void cvAdd(Mat src1, Mat src2, Mat out) {
-		Core.add(src1, src2, out);
-	}
-
-	/**
-	 * Mutiplies one image by another with given scale.
-	 * @param src1 first image.
-	 * @param src2 second image.
-	 * @param scale Scale for multiplication.
-	 * @param dst Result image.
-	 */
-	private void cvMultiply(Mat src1, Mat src2, double scale, Mat dst) {
-		Core.multiply(src1, src2, dst, scale);
 	}
 
 	/**

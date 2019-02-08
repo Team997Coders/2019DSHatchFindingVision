@@ -30,11 +30,8 @@ public class NetworkTableWriterUnitTest {
         // Mock up a network table to write to
         NetworkTable networkTableMock = mock(NetworkTable.class);
 
-        // Mock a camera too.
-        MiniPanTiltTeensy panTilt = mock(MiniPanTiltTeensy.class);
-
         // Wire up class under test
-        NetworkTableWriter networkTableWriter = new NetworkTableWriter(interpreterMock, networkTableMock, panTilt);
+        NetworkTableWriter networkTableWriter = new NetworkTableWriter(interpreterMock, networkTableMock);
 
         // Act
         networkTableWriter.write();
@@ -61,11 +58,8 @@ public class NetworkTableWriterUnitTest {
         // Mock up a network table to write to
         NetworkTable networkTableMock = mock(NetworkTable.class);
 
-        // Mock a camera servo mount
-        MiniPanTiltTeensy panTilt = mock(MiniPanTiltTeensy.class);
-
         // Wire up class under test
-        NetworkTableWriter networkTableWriter = new NetworkTableWriter(interpreterMock, networkTableMock, panTilt);
+        NetworkTableWriter networkTableWriter = new NetworkTableWriter(interpreterMock, networkTableMock);
 
         // Act
         networkTableWriter.write();

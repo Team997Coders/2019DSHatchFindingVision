@@ -12,7 +12,6 @@ public class NetworkTableWriter implements INetworkTableWriter
 {
   HatchTargetPipelineInterpreter interpreter;
   NetworkTable publishingTable;
-  MiniPanTilt miniPanTilt;
   double[] angleArrayRadians;
   double[] targetRanges;
 
@@ -25,10 +24,9 @@ public class NetworkTableWriter implements INetworkTableWriter
    * @param interperter       The interpreter class that converts blob results to interpreted data
    * @param publishingTable   An instantiated network table that interpreted data will get written to
    */
-  public NetworkTableWriter(HatchTargetPipelineInterpreter interpreter, NetworkTable publishingTable, MiniPanTilt miniPanTilt) {
+  public NetworkTableWriter(HatchTargetPipelineInterpreter interpreter, NetworkTable publishingTable) {
     this.interpreter = interpreter;
     this.publishingTable = publishingTable;
-    this.miniPanTilt = miniPanTilt;
   }
 
   /**
@@ -50,14 +48,6 @@ public class NetworkTableWriter implements INetworkTableWriter
     }
     publishingTable.putNumberArray("hatchTargetAngles", angleArrayRadians);
     publishingTable.putNumberArray("hatchTargetRanges", targetRanges);
-
-    try {
-      publishingTable.putNumber("cameraYaw", miniPanTilt.getAngles().getPanAngle());
-      publishingTable.putNumber("cameraPitch", miniPanTilt.getAngles().getTiltAngle());
-    } catch(Exception e) {
-      System.out.println("Communication exception when returning angles from camera."); 
-      e.printStackTrace();
-    }
   }
 
   public String getTargetFoundKey() {
