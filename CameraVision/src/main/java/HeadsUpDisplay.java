@@ -23,6 +23,8 @@ public class HeadsUpDisplay {
   private CameraControlStateMachine.State state;
   private final NetworkTable smartDashboard;
   private final NetworkTable visionNetworkTable;
+  private static int tnfeRetryLimit = 5;
+  private int tnfeRetries = 0;
   
   /**
    * Constructor for the HUD taking a reference to an annotator and interpreter and camera control.
@@ -135,6 +137,7 @@ public class HeadsUpDisplay {
       try {
         // Update the known center of the selected target from the last known point
         HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
+        tnfeRetries = 0;
         slewPoint = hatchTarget.targetRectangle().center;
         // Draw the targeting rectangle being slewed
         imageAnnotator.drawSlewingRectangle(slewPoint);
@@ -147,8 +150,13 @@ public class HeadsUpDisplay {
             normalizedPointFromCenter.x, 
             normalizedPointFromCenter.y);
       } catch (TargetNotFoundException e) {
-        // We can no longer find a target containing our selected target point.
-        visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.FailedToLock.toString());
+        if (tnfeRetries > tnfeRetryLimit) {
+          tnfeRetries = 0;
+          // We can no longer find a target containing our selected target point.
+          visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.FailedToLock.toString());
+        } else {
+          tnfeRetries++;
+        }
       } catch (NullPointerException e) {
         // If the slewpoint is null, just flip back to identifying targets
         visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.IdentifyTargets.toString());
@@ -157,6 +165,7 @@ public class HeadsUpDisplay {
       try {
         // Update the known center of the selected target from the last known point
         HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
+        tnfeRetries = 0;
         slewPoint = hatchTarget.targetRectangle().center;
         // Draw the targeting rectangle showing we are locked
         imageAnnotator.drawLockedRectangle(slewPoint);
@@ -171,8 +180,13 @@ public class HeadsUpDisplay {
             normalizedPointFromCenter.x, 
             normalizedPointFromCenter.y);
       } catch (TargetNotFoundException e) {
-        // We can no longer find a target containing our selected target point.
-        visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.LoseLock.toString());
+        if (tnfeRetries > tnfeRetryLimit) {
+          tnfeRetries = 0;
+          // We can no longer find a target containing our selected target point.
+          visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.LoseLock.toString());
+        } else {
+          tnfeRetries++;
+        }
       }
     } else if (state == CameraControlStateMachine.State.LockFailed) {
       // TODO: Give visual indication to user that lock failed
@@ -197,6 +211,7 @@ public class HeadsUpDisplay {
       try {
         // Update the known center of the selected target from the last known point
         HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
+        tnfeRetries = 0;
         slewPoint = hatchTarget.targetRectangle().center;
         // Draw the targeting rectangle indicating that driving is in progress
         imageAnnotator.drawDrivingRectangle(slewPoint);
@@ -211,8 +226,13 @@ public class HeadsUpDisplay {
             normalizedPointFromCenter.x, 
             normalizedPointFromCenter.y);
       } catch (TargetNotFoundException e) {
-        // We can no longer find a target containing our selected target point.
-        visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.LoseLock.toString());
+        if (tnfeRetries > tnfeRetryLimit) {
+          tnfeRetries = 0;
+          // We can no longer find a target containing our selected target point.
+          visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.LoseLock.toString());
+        } else {
+          tnfeRetries++;
+        }
       }
     }
 

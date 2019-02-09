@@ -1,4 +1,14 @@
 {
     "python.pythonPath": "C:\\Users\\chuck\\AppData\\Local\\Programs\\Python\\Python37\\python.exe",
-    "java.configuration.updateBuildConfiguration": "automatic"
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.test.config": [
+      {
+        "name": "cameraVisionConfiguration",
+        "workingDirectory": "/Users/chuck_benedict/Projects/2019DSHatchFindingVision/CameraVision",
+        "args": [],
+        "vmargs": [],
+        "env": { "PATH":"/Users/chuck_benedict/Projects/2019DSHatchFindingVision/CameraVision/build/opencv"}
+      }
+    ],
+    "java.test.defaultConfig": "cameraVisionConfiguration"
 }

@@ -21,22 +21,6 @@ public class HatchTargetPipelineInterpreter {
 	private IHatchTargetPipeline pipeline;
 	private CameraParameters cameraParameters;
 
-  /**
-   * Custom exception to indicate an expected target was not found.
-   */
-  public class TargetNotFound extends Exception {
-    public TargetNotFound () {}
-    public TargetNotFound (String message) {
-      super (message);
-    }
-    public TargetNotFound (Throwable cause) {
-      super (cause);
-    }
-    public TargetNotFound (String message, Throwable cause) {
-      super (message, cause);
-    }
-  }
-
 	/**
 	 * A comparator class for sorting rotated rectangles on the
 	 * x axis left to right.
@@ -145,41 +129,42 @@ public class HatchTargetPipelineInterpreter {
    */
   public Point getNormalizedTargetPositionFromCenter(Point targetIdentifyingPoint) throws TargetNotFoundException {
     // Find the hatch target containing the identifying point
-    for (HatchTarget hatchTarget: getHatchTargets()) {
-      if (hatchTarget.targetRectangle().boundingRect().contains(targetIdentifyingPoint)) {
-        // Hatch target found
-        Point center = hatchTarget.center();
-        Point point = new Point();
-        double oneHalfFOVPixelWidth = cameraParameters.getFOVPixelWidth() / 2;
-        double oneHalfFOVPixelHeight = cameraParameters.getFOVPixelHeight() / 2;
-        if (center.x > oneHalfFOVPixelWidth) {
-          point.x = (center.x - (cameraParameters.getFOVPixelWidth() / 2)) / oneHalfFOVPixelWidth;
-          point.y = (center.y - (cameraParameters.getFOVPixelHeight() / 2)) / oneHalfFOVPixelHeight;
-        } else {
-          point.x = (((cameraParameters.getFOVPixelWidth() / 2) - center.x) / oneHalfFOVPixelWidth) * -1;
-          point.y = (((cameraParameters.getFOVPixelHeight() / 2) - center.y ) / oneHalfFOVPixelHeight) * -1;
-        }
-        return point;
-      }
+    HatchTarget hatchTarget = getHatchTargetFromPoint(targetIdentifyingPoint);
+    Point center = hatchTarget.center();
+    Point point = new Point();
+    // Find center of FOV
+    double oneHalfFOVPixelWidth = cameraParameters.getFOVPixelWidth() / 2;
+    double oneHalfFOVPixelHeight = cameraParameters.getFOVPixelHeight() / 2;
+    // Normalize position
+    if (center.x > oneHalfFOVPixelWidth) {
+      point.x = (center.x - (cameraParameters.getFOVPixelWidth() / 2)) / oneHalfFOVPixelWidth;
+      point.y = (center.y - (cameraParameters.getFOVPixelHeight() / 2)) / oneHalfFOVPixelHeight;
+    } else {
+      point.x = (((cameraParameters.getFOVPixelWidth() / 2) - center.x) / oneHalfFOVPixelWidth) * -1;
+      point.y = (((cameraParameters.getFOVPixelHeight() / 2) - center.y ) / oneHalfFOVPixelHeight) * -1;
     }
-    throw new TargetNotFoundException();
+    return point;
   }
 
 	public HatchTarget getHatchTargetFromPoint(Point point) throws TargetNotFoundException {
+    // Iterate over hatch targets
     for (HatchTarget hatchTarget: getHatchTargets()) {
       // Upsize the rotated rectangle by 30% to add some slop for slewing
       double upsizeFactor = 1.3;
       RotatedRect originalRectangle = hatchTarget.targetRectangle();
 
+      // Upsize the rectangle
       RotatedRect upsizedRectangle = new RotatedRect(
         new Point(originalRectangle.center.x, originalRectangle.center.y),
         new Size(originalRectangle.size.height * upsizeFactor, originalRectangle.size.width * upsizeFactor), 
         originalRectangle.angle);
 
+      // Return it if the point being sent in is contained within
       if (upsizedRectangle.boundingRect().contains(point)) {
         return hatchTarget;
       }
     }
+    // Otherwise bail and let consumer know
     throw new TargetNotFoundException("No hatch target found containing point.");
 	}
 
