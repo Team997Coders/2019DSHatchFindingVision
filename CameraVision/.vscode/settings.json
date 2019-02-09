@@ -4,10 +4,10 @@
     "java.test.config": [
       {
         "name": "cameraVisionConfiguration",
-        "workingDirectory": "/Users/chuck_benedict/Projects/2019DSHatchFindingVision/CameraVision",
+        "workingDirectory": "${workspaceFolder}",
         "args": [],
         "vmargs": [],
-        "env": { "PATH":"/Users/chuck_benedict/Projects/2019DSHatchFindingVision/CameraVision/build/opencv"}
+        "env": { "PATH":"build/opencv"}
       }
     ],
     "java.test.defaultConfig": "cameraVisionConfiguration"
