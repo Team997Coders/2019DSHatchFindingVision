@@ -20,7 +20,8 @@ public class HeadsUpDisplayUnitTest {
   @Test
   /**
    * This tests a "high pass filter" which waits a bit, after a camera jolt
-   * or rapid movement, to redetect a target in the last known good location.
+   * or rapid movement, to redetect a target in the last known good location. It
+   * does it for the SlewingToTarget state.
    */
   public void itShouldReturnInputImageAtFirstWhenTargetIsNotFoundWhenSlewingToTarget() {
     // Assemble
@@ -48,6 +49,12 @@ public class HeadsUpDisplayUnitTest {
   }
 
   @Test
+  /**
+   * This tests the retry limit for the SlewingToTarget state to see if 
+   * we signal to fire the FailedToLock trigger via network tables. I have since
+   * realized that there is an RPC mechanism to network tables where this could
+   * be done directly...maybe we could refactor.
+   */
   public void itShouldThrowTargetNotFoundExcpetionAfterRetriesWhenSlewingToTarget() {
     // Assemble
     ImageAnnotator imageAnnotatorMock = mock(ImageAnnotator.class);
