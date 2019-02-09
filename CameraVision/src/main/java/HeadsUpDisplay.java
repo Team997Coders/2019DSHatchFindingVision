@@ -23,7 +23,7 @@ public class HeadsUpDisplay {
   private CameraControlStateMachine.State state;
   private final NetworkTable smartDashboard;
   private final NetworkTable visionNetworkTable;
-  private static int tnfeRetryLimit = 5;
+  private static int tnfeRetryLimit = 4;
   private int tnfeRetries = 0;
   
   /**
