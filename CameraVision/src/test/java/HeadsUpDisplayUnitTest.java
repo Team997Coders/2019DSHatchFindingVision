@@ -30,6 +30,7 @@ public class HeadsUpDisplayUnitTest {
     Mat inputImage = mock(Mat.class);
 
     when(hatchTargetPipelineInterpreterMock.getHatchTargetFromPoint(any(Point.class))).thenThrow(TargetNotFoundException.class);
+    when(imageAnnotatorMock.getCompletedAnnotation()).thenReturn(inputImage);
 
     HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotatorMock, 
       hatchTargetPipelineInterpreterMock, 
