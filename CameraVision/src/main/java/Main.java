@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.networktables.*;
 import edu.wpi.first.wpilibj.tables.*;
 
 import java.io.File;
+import java.net.MalformedURLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -12,7 +13,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 
 public class Main {
 
-  public static void main(String ... argv) {
+  public static void main(String ... argv) throws CameraParametersException, MalformedURLException {
     Main main = new Main();
     RuntimeSettings runtimeSettings = new RuntimeSettings(argv);
     if (runtimeSettings.parse()) {
@@ -32,7 +33,7 @@ public class Main {
     }
   }
 
-  public void run(RuntimeSettings runtimeSettings) {
+  public void run(RuntimeSettings runtimeSettings) throws CameraParametersException, MalformedURLException {
     // Loads our OpenCV library. This MUST be included
     System.loadLibrary("opencv_java310");
 
@@ -40,7 +41,7 @@ public class Main {
     NetworkTable smartDashboardTable = null;
 
     // Wire up camera parameters for a specific camera...this could be parameterized from command line
-    CameraParameters cameraParameters = new Lifecam5000CameraParameters();
+    CameraParameters cameraParameters = new Lifecam5000CameraParametersPi(runtimeSettings.getCameraURL());
 
     // Wire up the pipeline to use for image processing
     IHatchTargetPipeline pipeline = new HatchTargetPipelineLifecam();
