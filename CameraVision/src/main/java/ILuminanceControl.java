@@ -1,4 +1,4 @@
 public interface ILuminanceControl {
-  void setExposure(int exposure);
-  void setBrightness(int brightness);
+  void setExposure(int exposure) throws CameraParametersException;
+  void setBrightness(int brightness) throws CameraParametersException;
 }
