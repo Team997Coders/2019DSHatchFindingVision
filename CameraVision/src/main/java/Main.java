@@ -12,7 +12,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 
 public class Main {
 
-  public static void main(String ... argv) {
+  public static void main(String ... argv) throws CameraParametersException {
     Main main = new Main();
     RuntimeSettings runtimeSettings = new RuntimeSettings(argv);
     if (runtimeSettings.parse()) {
@@ -32,7 +32,7 @@ public class Main {
     }
   }
 
-  public void run(RuntimeSettings runtimeSettings) {
+  public void run(RuntimeSettings runtimeSettings) throws CameraParametersException {
     // Loads our OpenCV library. This MUST be included
     System.loadLibrary("opencv_java310");
 
@@ -40,7 +40,7 @@ public class Main {
     NetworkTable smartDashboardTable = null;
 
     // Wire up camera parameters for a specific camera...this could be parameterized from command line
-    CameraParameters cameraParameters = new Lifecam5000CameraParameters();
+    CameraParameters cameraParameters = new Lifecam5000CameraParametersPi();
 
     // Wire up the pipeline to use for image processing
     IHatchTargetPipeline pipeline = new HatchTargetPipelineLifecam();

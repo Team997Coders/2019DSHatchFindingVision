@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
  */
 public class Lifecam5000CameraParametersPi extends Lifecam5000CameraParameters implements ILuminanceControl {
   private final int port;
+  private String binDir = "/usr/bin/";
 
   public Lifecam5000CameraParametersPi() throws CameraParametersException {
     // Default to port 0
@@ -16,20 +17,54 @@ public class Lifecam5000CameraParametersPi extends Lifecam5000CameraParameters i
   }
 
   public Lifecam5000CameraParametersPi(int port) throws CameraParametersException {
+    this.port = port;
+    // Set autofocus to off! POS Lifecam just goes autofocus bonkers.
+    setAutofocus(0);
+    // Set focus to infinity
+    setFocus(0);
+    // Set autoexposure to off.
+    setAutoExposure(1);
+    // Set exposure to trial value that seems to work reasonably well.
+    setExposure(9);
+    // Set brightness to trial value that seems to work reasonably well.
+    setBrightness(100);
+  }
+
+  public void setAutofocus(int autofocus) throws CameraParametersException {
     try {
-      this.port = port;
       ProcessBuilder processBuilder = new ProcessBuilder();
-      // Set autofocus to off! POS Lifecam just goes autofocus bonkers.
-      processBuilder.command("bash", "-c", String.format("v4l2-ctrl -d /dev/video%d -c focus_auto=0", port));
+      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%d -c focus_auto=%d", binDir, port, autofocus));
       StringBuilder output = new StringBuilder();
       int rc = runIt(processBuilder, output);
       if (rc != 0) {
         throw new CameraParametersException(String.format("Set autofocus off command returned %d\n%s", rc, output));
       }
-      // Set autoexposure to off.
-      processBuilder.command("bash", "-c", String.format("v4l2-ctrl -d /dev/video%d -c exposure_auto=1", port));
+    } catch (IOException|InterruptedException e) {
+      throw new CameraParametersException(e);
+    }
+  }
+
+  public void setFocus(int focus) throws CameraParametersException {
+    try {
+      ProcessBuilder processBuilder = new ProcessBuilder();
+      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%d -c focus_absolute=%d", binDir, port, focus));
+      StringBuilder output = new StringBuilder();
+      int rc = runIt(processBuilder, output);
+      if (rc != 0) {
+        throw new CameraParametersException(String.format("Set focus command returned %d\n%s", rc, output));
+      }
+    } catch (IOException|InterruptedException e) {
+      throw new CameraParametersException(e);
+    }
+  }
+
+  public void setAutoExposure(int autoExposure) throws CameraParametersException {
+    try {
+      ProcessBuilder processBuilder = new ProcessBuilder();
+      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%d -c exposure_auto=%d", binDir, port, autoExposure));
+      StringBuilder output = new StringBuilder();
       output = new StringBuilder();
-      rc = runIt(processBuilder, output);
+      int rc = runIt(processBuilder, output);
       if (rc != 0) {
         throw new CameraParametersException(String.format("Set autoexposure off command returned %d\n%s", rc, output));
       }
@@ -43,7 +78,7 @@ public class Lifecam5000CameraParametersPi extends Lifecam5000CameraParameters i
       ProcessBuilder processBuilder = new ProcessBuilder();
       // -- Linux --
       // Run a shell command
-      processBuilder.command("bash", "-c", String.format("v4l2-ctrl -d /dev/video%d -c brightness=%d", port, brightness));
+      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%d -c brightness=%d", binDir, port, brightness));
       StringBuilder output = new StringBuilder();
       int rc = runIt(processBuilder, output);
       if (rc != 0) {
@@ -59,7 +94,7 @@ public class Lifecam5000CameraParametersPi extends Lifecam5000CameraParameters i
       ProcessBuilder processBuilder = new ProcessBuilder();
       // -- Linux --
       // Run a shell command
-      processBuilder.command("bash", "-c", String.format("v4l2-ctrl -d /dev/video%d -c exposure_absolute=%d", port, exposure));
+      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%d -c exposure_absolute=%d", binDir, port, exposure));
       StringBuilder output = new StringBuilder();
       int rc = runIt(processBuilder, output);
       if (rc != 0) {
