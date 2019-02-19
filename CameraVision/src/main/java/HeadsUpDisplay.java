@@ -206,6 +206,8 @@ public class HeadsUpDisplay {
       // Clear the selected target
       SelectedTarget selectedTarget = new SelectedTarget(visionNetworkTable);
       selectedTarget.clear();
+      // Update luminance values
+      // Draw the luminance value on the frame
       imageAnnotator.drawCalibrationInformation();
     } else if (state == CameraControlStateMachine.State.DrivingToTarget) {
       try {
