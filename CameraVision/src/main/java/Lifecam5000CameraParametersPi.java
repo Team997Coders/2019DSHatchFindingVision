@@ -1,6 +1,8 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 /**
  * For the Lifecam 5000 camera, the class will set the brightness and exposure
@@ -10,13 +12,22 @@ import java.io.InputStreamReader;
 public class Lifecam5000CameraParametersPi extends Lifecam5000CameraParameters implements ILuminanceControl {
   private final int port;
   private String binDir = "/usr/bin/";
+  private final String host;
 
-  public Lifecam5000CameraParametersPi() throws CameraParametersException {
+  public Lifecam5000CameraParametersPi(String cameraURLString) throws 
+      CameraParametersException, MalformedURLException {
     // Default to port 0
-    this(0);
+    this(cameraURLString, 0);
   }
 
-  public Lifecam5000CameraParametersPi(int port) throws CameraParametersException {
+  public Lifecam5000CameraParametersPi(String cameraURLString, int port) throws 
+      CameraParametersException, MalformedURLException {
+    URL cameraURL = new URL(cameraURLString);
+    host = cameraURL.getHost();
+    // Only exposure setting is supported on localhost at the moment
+    if (!host.toLowerCase().contains("localhost") && !host.contains("127.0.0.1")) {
+      throw new RuntimeException("Camera exposure settings can only be set if camera is on localhost. Implement ssh mechanism for remote setting.");
+    }
     this.port = port;
     // Set autofocus to off! POS Lifecam just goes autofocus bonkers.
     setAutofocus(0);
