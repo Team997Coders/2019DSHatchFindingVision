@@ -5,22 +5,22 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
- * For the Lifecam 5000 camera, the class will set the brightness, exposure, and focus
+ * For the Lifecam 5000 camera, the class will set the brightness and exposure
  * on the camera running on a Raspberry Pi running Raspbian. It assumes that 
  * v4l2-ctrl is installed on the Pi and will throw an error otherwise.
  */
-public class Lifecam5000CameraParametersPi extends Lifecam5000CameraParameters implements ILuminanceControl {
+public class Lifecam3000CameraParametersPi extends Lifecam3000CameraParameters implements ILuminanceControl {
   private final int port;
   private String binDir = "/usr/bin/";
   private final String host;
 
-  public Lifecam5000CameraParametersPi(String cameraURLString) throws 
+  public Lifecam3000CameraParametersPi(String cameraURLString) throws 
       CameraParametersException, MalformedURLException {
     // Default to port 0
     this(cameraURLString, 0);
   }
 
-  public Lifecam5000CameraParametersPi(String cameraURLString, int port) throws 
+  public Lifecam3000CameraParametersPi(String cameraURLString, int port) throws 
       CameraParametersException, MalformedURLException {
     URL cameraURL = new URL(cameraURLString);
     host = cameraURL.getHost();
@@ -29,44 +29,12 @@ public class Lifecam5000CameraParametersPi extends Lifecam5000CameraParameters i
       throw new RuntimeException("Camera exposure settings can only be set if camera is on localhost. Implement ssh mechanism for remote setting.");
     }
     this.port = port;
-    // Set autofocus to off! POS Lifecam just goes autofocus bonkers.
-    setAutofocus(0);
-    // Set focus to infinity
-    setFocus(0);
     // Set autoexposure to off.
     setAutoExposure(1);
     // Set exposure to trial value that seems to work reasonably well.
-    setExposure(9);
+    setExposure(20);
     // Set brightness to trial value that seems to work reasonably well.
     setBrightness(100);
-  }
-
-  public void setAutofocus(int autofocus) throws CameraParametersException {
-    try {
-      ProcessBuilder processBuilder = new ProcessBuilder();
-      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%d -c focus_auto=%d", binDir, port, autofocus));
-      StringBuilder output = new StringBuilder();
-      int rc = runIt(processBuilder, output);
-      if (rc != 0) {
-        throw new CameraParametersException(String.format("Set autofocus off command returned %d\n%s", rc, output));
-      }
-    } catch (IOException|InterruptedException e) {
-      throw new CameraParametersException(e);
-    }
-  }
-
-  public void setFocus(int focus) throws CameraParametersException {
-    try {
-      ProcessBuilder processBuilder = new ProcessBuilder();
-      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%d -c focus_absolute=%d", binDir, port, focus));
-      StringBuilder output = new StringBuilder();
-      int rc = runIt(processBuilder, output);
-      if (rc != 0) {
-        throw new CameraParametersException(String.format("Set focus command returned %d\n%s", rc, output));
-      }
-    } catch (IOException|InterruptedException e) {
-      throw new CameraParametersException(e);
-    }
   }
 
   public void setAutoExposure(int autoExposure) throws CameraParametersException {

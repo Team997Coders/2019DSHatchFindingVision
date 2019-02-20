@@ -1,11 +1,11 @@
 public class Lifecam3000CameraParameters extends CameraParameters {
   public double getFOVWidthCalibrationInInches() {
-    return 12.0;
+    return 85.5;
   }
   public double getFOVHeightCalibrationInInches() {
-    throw new IllegalAccessError("Implement me!");
+    return 60;
   }
   public double getRangeCalibrationInInches() {
-    return 10.5;
+    return 87.5;
   }
 }

@@ -41,7 +41,7 @@ public class Main {
     NetworkTable smartDashboardTable = null;
 
     // Wire up camera parameters for a specific camera...this could be parameterized from command line
-    CameraParameters cameraParameters = new Lifecam5000CameraParametersPi(runtimeSettings.getCameraURL());
+    CameraParameters cameraParameters = new Lifecam3000CameraParametersPi(runtimeSettings.getCameraURL());
 
     // Wire up the pipeline to use for image processing
     IHatchTargetPipeline pipeline = new HatchTargetPipelineLifecam();
