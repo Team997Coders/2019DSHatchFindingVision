@@ -57,9 +57,24 @@ Once this application is run, it publishes two HTTP endpoints:
 
 The application also writes image processed interpreted values to network tables:
 
-| Key                               | Type    | Description                                     |
-| --------------------------------- | ------- | ----------------------------------------------- |
-| `SmartDashboard\BlueBallFound`    | boolean | True if any blue ball is found in frame         |
-| `SmartDashboard\BlueBallCount`    | int     | Count of blue balls found in frame              |
-| `SmartDashboard\RedBallFound`     | boolean | True if any red ball is found in frame          |
-| `SmartDashboard\RedBallCount`     | int     | Count of red balls found in frame               |
+| Key                                  | Type    | Description                                                                                           |
+| ------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------- |
+| `Vision\RangeInInches`               | number  | Range to selected target in inches                                                                    |
+| `Vision\CameraAngleInDegrees`        | number  | Horizontal angle of camera relative to robot, -90 to 90 degrees, with 0 being perpendicular to front  |
+| `Vision\AngleToTargetInDegrees`      | number  | Position of robot relative to target, -90 to 90 degrees, with 0 degrees being perpendicular to target |
+| `Vision\NormalizedPointFromCenter\X` | number  | -1 to 1 representing orientation of camera angle to getting target in horizontal center of FOV        |
+| `Vision\NormalizedPointFromCenter\Y` | number  | -1 to 1 representing orientation of camera angle to getting target in vertical center of FOV          |
+
+Given that the cameras are not in the center of the robot, the normalized points will have to be adjusted to compensate for that.
+
+Note the this application supports two cameras. On the Pi, USB ports are mapped via udev rules
+to the following symlinks:
+
+| Port          | Symlink           | Physical location                 |
+| ------------- | ----------------- | --------------------------------- |
+| `1-1.4:1.0`   | `/dev/videofront` | Top port farthest from ethernet   |
+| `1-1.2:1.0`   | `/dev/videoback`  | Top port closest to ethernet      |
+
+The following udev rules should exist in `/etc/udev/rules.d/99-usb.rules`
+`KERNEL=="video*", KERNELS=="1-1.4:1.0", SYMLINK+="videofront"`
+`KERNEL=="video*", KERNELS=="1-1.2:1.0", SYMLINK+="videoback"`

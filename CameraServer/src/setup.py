@@ -7,7 +7,7 @@ def readme():
 
 
 setup(name='ipcamera',
-      version='0.0.1',
+      version='0.0.5',
       description='Make USB camera an IP Camera',
       long_description=readme(),
       classifiers=[
