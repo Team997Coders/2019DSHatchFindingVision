@@ -13,8 +13,10 @@ def projectName = 'CameraVision'
 def team = '997'
 // Put in a host address for network tables simulator server or leave blank for roboRio
 def nthost = 'localhost'
-// Put in a URL for the web camera
-def cameraURL = 'http://localhost:1337/mjpeg_stream'
+// Put in a URL for the front web camera
+def frontCameraURL = 'http://localhost:1337/mjpeg_stream'
+// Put in a URL for the back web camera
+def backCameraURL = 'http://localhost:1336/mjpeg_stream'
 ```
 
 The nthost parameter contains the host (ip address or hostname) of a host running the network tables server.  It will receive the interpreted output from the frames decoded from this app.  If you leave this blank, then the roboRio will automatically try to be detected.  You can pass --noNT and any network tables writing will be bypassed.
@@ -33,9 +35,11 @@ You can run this application with the following command `java -jar CameraVision-
 The following option is required: [--team | -t]
 Usage: CameraVision [options]
   Options:
-    --cameraurl, -c
-      Use specified MJPEG over http streaming source (overrides NetworkTables
-      value)
+    --frontcameraurl, -f
+      Use specified MJPEG over http streaming source for front camera
+      Default: <empty string>
+    --backcameraurl, -b
+      Use specified MJPEG over http streaming source for back camera
       Default: <empty string>
     --help
 
@@ -43,7 +47,7 @@ Usage: CameraVision [options]
       Do not call out to network tables to write interpreted values
       Default: false
     --nthost, -h
-      NetworkTables server host IP address (for testing)
+      NetworkTables server host IP address (usually roborio but could be localhost for testing)
       Default: <empty string>
   * --team, -t
       FIRST team number
@@ -51,8 +55,7 @@ Usage: CameraVision [options]
 ```
 
 ## Usage
-Once this application is run, it publishes two HTTP endpoints:
-`http://localhost:1185` is the source image stream in MJPEG over HTTP format and 
+Once this application is run, it publishes one HTTP endpoints:
 `http://localhost:1186` is the image processed image stream in MJPEG over HTTP format
 
 The application also writes image processed interpreted values to network tables:
@@ -75,10 +78,14 @@ to the following symlinks:
 | `1-1.4:1.0`   | `/dev/videofront` | Top port farthest from ethernet   |
 | `1-1.2:1.0`   | `/dev/videoback`  | Top port closest to ethernet      |
 
-For the Pi3 B+ (rev a020d3), the following udev rules should exist in `/etc/udev/rules.d/99-usb.rules`<br>
-`KERNEL=="video*", KERNELS=="1-1.3:1.0", SYMLINK+="videofront"`<br>
-`KERNEL=="video*", KERNELS=="1-1.1.2:1.0", SYMLINK+="videoback"`
+For the Pi3 B+ (rev a020d3), the following udev rules should exist in `/etc/udev/rules.d/99-usb.rules`:
+```
+KERNEL=="video*", KERNELS=="1-1.3:1.0", SYMLINK+="videofront"
+KERNEL=="video*", KERNELS=="1-1.1.2:1.0", SYMLINK+="videoback"
+```
 
-For the Pi3 B, 
-`KERNEL=="video*", KERNELS=="1-1.4:1.0", SYMLINK+="videofront"`<br>
-`KERNEL=="video*", KERNELS=="1-1.2:1.0", SYMLINK+="videoback"`
+For the Pi3 B:
+```
+KERNEL=="video*", KERNELS=="1-1.4:1.0", SYMLINK+="videofront"
+KERNEL=="video*", KERNELS=="1-1.2:1.0", SYMLINK+="videoback"
+```
