@@ -51,6 +51,19 @@ public class HatchTargetPipelineInterpreter {
 	}
 
 	/**
+	 * Set the camera parameters that will be used to compute distances
+	 * and angles to targets.
+	 * 
+	 * @param cameraParameters Calibrated camera parameters
+	 */
+	public void setCameraParameters(CameraParameters cameraParameters) {
+		if (cameraParameters == null) {
+			throw new IllegalArgumentException("cameraParameters cannot be null.");
+		}
+		this.cameraParameters = cameraParameters;
+	}
+
+	/**
 	 * Process filtered contours and return an array of best fit rectangles
 	 * for each contour found.
 	 * 

@@ -23,9 +23,12 @@ public class RuntimeSettings {
     @Parameter(names={"--nont", "-n"},  
         description="Do not call out to network tables to write interpreted values")
     private boolean noNT = false;
-    @Parameter(names={"--cameraurl", "-c"},  
-        description="Use specified MJPEG over http streaming source (overrides NetworkTables value)")
-    private String cameraURL = "";
+    @Parameter(names={"--frontcameraurl", "-f"},  
+        description="Use specified MJPEG over http streaming source for front camera")
+    private String frontCameraURL = "";
+    @Parameter(names={"--backcameraurl", "-b"},  
+        description="Use specified MJPEG over http streaming source for back camera")
+    private String backCameraURL = "";
     @Parameter(names = "--help", help = true)
     private boolean help = false;
 
@@ -81,8 +84,12 @@ public class RuntimeSettings {
         return noNT;
     }
 
-    public String getCameraURL() {
-        return cameraURL;
+    public String getFrontCameraURL() {
+        return frontCameraURL;
+    }
+
+    public String getBackCameraURL() {
+        return backCameraURL;
     }
 
     public boolean getHelp() {

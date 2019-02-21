@@ -10,17 +10,17 @@ import java.net.URL;
  * v4l2-ctrl is installed on the Pi and will throw an error otherwise.
  */
 public class Lifecam5000CameraParametersPi extends Lifecam5000CameraParameters implements ILuminanceControl {
-  private final int port;
+  private final String port;
   private String binDir = "/usr/bin/";
   private final String host;
 
   public Lifecam5000CameraParametersPi(String cameraURLString) throws 
       CameraParametersException, MalformedURLException {
     // Default to port 0
-    this(cameraURLString, 0);
+    this(cameraURLString, "0");
   }
 
-  public Lifecam5000CameraParametersPi(String cameraURLString, int port) throws 
+  public Lifecam5000CameraParametersPi(String cameraURLString, String port) throws 
       CameraParametersException, MalformedURLException {
     URL cameraURL = new URL(cameraURLString);
     host = cameraURL.getHost();
@@ -44,7 +44,7 @@ public class Lifecam5000CameraParametersPi extends Lifecam5000CameraParameters i
   public void setAutofocus(int autofocus) throws CameraParametersException {
     try {
       ProcessBuilder processBuilder = new ProcessBuilder();
-      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%d -c focus_auto=%d", binDir, port, autofocus));
+      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%s -c focus_auto=%d", binDir, port, autofocus));
       StringBuilder output = new StringBuilder();
       int rc = runIt(processBuilder, output);
       if (rc != 0) {
@@ -58,7 +58,7 @@ public class Lifecam5000CameraParametersPi extends Lifecam5000CameraParameters i
   public void setFocus(int focus) throws CameraParametersException {
     try {
       ProcessBuilder processBuilder = new ProcessBuilder();
-      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%d -c focus_absolute=%d", binDir, port, focus));
+      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%s -c focus_absolute=%d", binDir, port, focus));
       StringBuilder output = new StringBuilder();
       int rc = runIt(processBuilder, output);
       if (rc != 0) {
@@ -72,7 +72,7 @@ public class Lifecam5000CameraParametersPi extends Lifecam5000CameraParameters i
   public void setAutoExposure(int autoExposure) throws CameraParametersException {
     try {
       ProcessBuilder processBuilder = new ProcessBuilder();
-      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%d -c exposure_auto=%d", binDir, port, autoExposure));
+      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%s -c exposure_auto=%d", binDir, port, autoExposure));
       StringBuilder output = new StringBuilder();
       output = new StringBuilder();
       int rc = runIt(processBuilder, output);
@@ -89,7 +89,7 @@ public class Lifecam5000CameraParametersPi extends Lifecam5000CameraParameters i
       ProcessBuilder processBuilder = new ProcessBuilder();
       // -- Linux --
       // Run a shell command
-      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%d -c brightness=%d", binDir, port, brightness));
+      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%s -c brightness=%d", binDir, port, brightness));
       StringBuilder output = new StringBuilder();
       int rc = runIt(processBuilder, output);
       if (rc != 0) {
@@ -105,7 +105,7 @@ public class Lifecam5000CameraParametersPi extends Lifecam5000CameraParameters i
       ProcessBuilder processBuilder = new ProcessBuilder();
       // -- Linux --
       // Run a shell command
-      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%d -c exposure_absolute=%d", binDir, port, exposure));
+      processBuilder.command("bash", "-c", String.format("%sv4l2-ctl -d /dev/video%s -c exposure_absolute=%d", binDir, port, exposure));
       StringBuilder output = new StringBuilder();
       int rc = runIt(processBuilder, output);
       if (rc != 0) {

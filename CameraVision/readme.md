@@ -75,6 +75,10 @@ to the following symlinks:
 | `1-1.4:1.0`   | `/dev/videofront` | Top port farthest from ethernet   |
 | `1-1.2:1.0`   | `/dev/videoback`  | Top port closest to ethernet      |
 
-The following udev rules should exist in `/etc/udev/rules.d/99-usb.rules`
-`KERNEL=="video*", KERNELS=="1-1.4:1.0", SYMLINK+="videofront"`
+For the Pi3 B+ (rev a020d3), the following udev rules should exist in `/etc/udev/rules.d/99-usb.rules`<br>
+`KERNEL=="video*", KERNELS=="1-1.3:1.0", SYMLINK+="videofront"`<br>
+`KERNEL=="video*", KERNELS=="1-1.1.2:1.0", SYMLINK+="videoback"`
+
+For the Pi3 B, 
+`KERNEL=="video*", KERNELS=="1-1.4:1.0", SYMLINK+="videofront"`<br>
 `KERNEL=="video*", KERNELS=="1-1.2:1.0", SYMLINK+="videoback"`

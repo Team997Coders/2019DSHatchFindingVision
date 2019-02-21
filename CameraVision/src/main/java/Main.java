@@ -1,7 +1,5 @@
 import edu.wpi.cscore.*;
-import edu.wpi.cscore.HttpCamera.HttpCameraKind;
 import edu.wpi.first.wpilibj.networktables.*;
-import edu.wpi.first.wpilibj.tables.*;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -40,8 +38,9 @@ public class Main {
     NetworkTable publishingTable = null;
     NetworkTable smartDashboardTable = null;
 
-    // Wire up camera parameters for a specific camera...this could be parameterized from command line
-    CameraParameters cameraParameters = new Lifecam3000CameraParametersPi(runtimeSettings.getCameraURL());
+    // Wire up camera parameters for a specific camera...this should be queried via the web api (which does not exist)
+    CameraParameters frontCameraParameters = new Lifecam3000CameraParametersPi(runtimeSettings.getFrontCameraURL(), "front");
+    CameraParameters backCameraParameters = new Lifecam5000CameraParametersPi(runtimeSettings.getBackCameraURL(), "back");
 
     // Wire up the pipeline to use for image processing
     IHatchTargetPipeline pipeline = new HatchTargetPipelineLifecam();
@@ -58,52 +57,40 @@ public class Main {
       smartDashboardTable = NetworkTable.getTable("SmartDashboard");
     }
 
-    // This is the network port you want to stream the raw received image to
-    // By rules, this has to be between 1180 and 1190, so 1185 is a good choice
-    int streamPort = 1185;
-
-    // This streaming mjpeg server will allow you to see the source image in a browser.
-    MjpegServer inputStream = new MjpegServer("MJPEG Server", streamPort);
-
-    // HTTP Camera
-    // This is our camera name from the robot.
-    // This can be set in your robot code with the following command
-    // CameraServer.getInstance().startAutomaticCapture("YourCameraNameHere");
-    // "USB Camera 0" is the default if no string is specified
-    // In NetworkTables, you can create a key CameraPublisher/<YourCameraNameHere>/streams
-    // of an array of strings to store the urls of the stream(s) the camera publishes.
-    // These urls point to an mjpeg stream over http, with each jpeg image separated
-    // into multiparts with the mixed data sub-type.
-    // See https://www.w3.org/Protocols/rfc1341/7_2_Multipart.html for more info.
-    // Jpeg part delimiters are separated by a boundary string specified in the Content-Type header.
-    //String cameraName = "USB Camera 0";
-    String cameraName = "VisionCoProc";
-    HttpCamera camera = setHttpCamera(cameraName, inputStream, runtimeSettings.getCameraURL(), runtimeSettings.getNoNT());
+    // Set up the cameras
+    HttpCamera frontCamera = new HttpCamera("Front", runtimeSettings.getFrontCameraURL());
+    HttpCamera backCamera = new HttpCamera("Back", runtimeSettings.getBackCameraURL());
     
-    /***********************************************/
-
     // This creates a CvSink for us to use. This grabs images from our selected camera, 
     // and will allow us to use those images in opencv
-    CvSink imageSink = new CvSink("CV Image Grabber");
-    imageSink.setSource(camera);
+    CvSink frontImageSink = new CvSink("Front Image Grabber");
+    frontImageSink.setSource(frontCamera);
+    CvSink backImageSink = new CvSink("Back Image Grabber");
+    backImageSink.setSource(backCamera);
 
     // This creates a CvSource to use.
     // This will take in a Mat image that has had OpenCV operations. 
     CvSource imageSource = new CvSource(
       "CV Image Source", 
       VideoMode.PixelFormat.kMJPEG, 
-      camera.getVideoMode().width, 
-      camera.getVideoMode().height, 
-      camera.getVideoMode().fps);
+      backCamera.getVideoMode().width, 
+      backCamera.getVideoMode().height, 
+      backCamera.getVideoMode().fps);
     // This streaming mjpeg server will allow you to see the final image processed image in a browser.
-    MjpegServer cvStream = new MjpegServer("CV Image Stream", 1186);
+    // TCP Port Usage 
+    // By rules, this has to be between 1180 and 1190.
+    MjpegServer cvStream = new MjpegServer("HUD", 1186);
     cvStream.setSource(imageSource);
 
     // Set up the image pump to grab images.
-    ImagePump imagePump = new ImagePump(imageSink);
+    ImagePump frontImagePump = new ImagePump(frontImageSink);
+    ImagePump backImagePump = new ImagePump(backImageSink);
+
+    ScoringDirectionStates scoringDirection = getScoringDirection(smartDashboardTable);
 
     // Get pipeline interpreter
-    HatchTargetPipelineInterpreter interpreter = new HatchTargetPipelineInterpreter(pipeline, cameraParameters);
+    HatchTargetPipelineInterpreter interpreter = new HatchTargetPipelineInterpreter(pipeline, 
+      scoringDirection == ScoringDirectionStates.Front ? frontCameraParameters : backCameraParameters);
 
     // Get the image annotator
     ImageAnnotator imageAnnotator = new ImageAnnotator(interpreter);
@@ -128,17 +115,24 @@ public class Main {
     System.out.println("Processing stream...");
 
     // Prime the image pump
-    inputImage = imagePump.pump();
+    inputImage = scoringDirection == ScoringDirectionStates.Front ? frontImagePump.pump() : backImagePump.pump();
 
     // Working var to save images at end of processing if requested.
     boolean saveImages = false;
 
     while (!Thread.currentThread().isInterrupted() && looping) {
       if (!inputImage.empty()) {
-        // Process the image concurrently
-        // with pumping the frame grabber for the next frame.
+        // Process the image concurrently...
         imageProcessor.processAsync(inputImage);
-        imagePump.pumpAsync();
+
+        // ... while pumping the frame grabber for the next frame.
+        if (scoringDirection == ScoringDirectionStates.Front) {
+          frontImagePump.pumpAsync();
+          interpreter.setCameraParameters(frontCameraParameters);
+        } else {
+          backImagePump.pumpAsync();
+          interpreter.setCameraParameters(backCameraParameters);
+        }
 
         // Await image processing to finsh
         imageProcessor.awaitProcessCompletion();
@@ -157,14 +151,34 @@ public class Main {
         }
 
         // Get the next image
-        inputImage = imagePump.awaitPumpCompletion();
+        inputImage = scoringDirection == ScoringDirectionStates.Front ? frontImagePump.awaitPumpCompletion() : backImagePump.awaitPumpCompletion();
       } else {
         // Get the next image, because the prior one was empty
-        inputImage = imagePump.pump();
+        inputImage = scoringDirection == ScoringDirectionStates.Front ? frontImagePump.pump() : backImagePump.pump();
       }
+
+      // Update the scoring direction
+      scoringDirection = getScoringDirection(smartDashboardTable);
     }
   }
-  
+
+  private enum ScoringDirectionStates {
+    None,
+    Front,
+    Back
+  }
+
+  private ScoringDirectionStates getScoringDirection(NetworkTable smartDashboardTable) {
+    String stateString;
+
+    if (smartDashboardTable == null) {
+      return ScoringDirectionStates.Back;
+    } else {
+      stateString = smartDashboardTable.getString("Scoring Direction", "Back");
+      return Enum.valueOf(ScoringDirectionStates.class, stateString);
+    }
+  }
+
   private void saveImages(Mat inputImage, Mat outputImage) {
     // Create directory if it does not exist
     String imagesPath = String.format("%s/images", System.getProperty("user.dir"));
@@ -186,62 +200,5 @@ public class Main {
     } else {
       System.out.println(String.format("Could not create %s directory to save images.", imagesPath));
     }
-  }
-
-  private HttpCamera setHttpCamera(String cameraName, MjpegServer server, String cameraURL, boolean noNT) {
-    // If the camera URL is explicitly specified on the command line, then use it.
-    if (cameraURL != "") {
-      HttpCamera camera = null;
-      camera = new HttpCamera("CoprocessorCamera", cameraURL);
-      server.setSource(camera);
-      return camera;
-    } else if (!noNT) {   // get the camera URL from network tables
-      // Start by grabbing the camera from NetworkTables
-      NetworkTable publishingTable = NetworkTable.getTable("CameraPublisher");
-      // Wait for robot to connect. Allow this to be attempted indefinitely
-      while (true) {
-        try {
-          if (publishingTable.getSubTables().size() > 0) {
-            break;
-          }
-          Thread.sleep(500);
-          } catch (Exception e) {
-              e.printStackTrace();
-          }
-      }
-
-
-      HttpCamera camera = null;
-      if (!publishingTable.containsSubTable(cameraName)) {
-        return null;
-      }
-      ITable cameraTable = publishingTable.getSubTable(cameraName);
-      String[] urls = cameraTable.getStringArray("streams", null);
-      if (urls == null) {
-        return null;
-      }
-      ArrayList<String> fixedUrls = new ArrayList<String>();
-      for (String url : urls) {
-        if (url.startsWith("mjpg")) {
-          fixedUrls.add(url.split(":", 2)[1]);
-        }
-      }
-      System.out.println(fixedUrls.toString());
-      camera = new HttpCamera("CoprocessorCamera", fixedUrls.toArray(new String[0]));
-      server.setSource(camera);
-      return camera;
-    }
-    // It is possible for the camera to be null. If it is, that means no camera could
-    // be found using NetworkTables to connect to.  And, user did not specify one on command line.
-    // Create an HttpCamera by giving a specified stream
-    // Note if this happens, no restream will be created.
-    // We assume that you have started up a local mjpeg stream.
-    System.out.println("Using hardcoded local http streaming camera...");
-    HttpCamera camera = null;
-    camera = new HttpCamera("CoprocessorCamera", 
-      "http://127.0.0.1:1337/mjpeg_stream", 
-      HttpCameraKind.kMJPGStreamer);
-    server.setSource(camera);
-    return camera;
   }
 }
