@@ -39,8 +39,8 @@ public class Main {
     NetworkTable smartDashboardTable = null;
 
     // Wire up camera parameters for a specific camera...this should be queried via the web api (which does not exist)
-    CameraParameters frontCameraParameters = new Lifecam3000CameraParametersPi(runtimeSettings.getFrontCameraURL(), "front");
-    CameraParameters backCameraParameters = new Lifecam5000CameraParametersPi(runtimeSettings.getBackCameraURL(), "back");
+    CameraParameters frontCameraParameters = CameraParametersFactoryPi.getCameraParameters(runtimeSettings.getFrontCameraURL(), "front");
+    CameraParameters backCameraParameters = CameraParametersFactoryPi.getCameraParameters(runtimeSettings.getBackCameraURL(), "back");
 
     // Wire up the pipeline to use for image processing
     IHatchTargetPipeline pipeline = new HatchTargetPipelineLifecam();
