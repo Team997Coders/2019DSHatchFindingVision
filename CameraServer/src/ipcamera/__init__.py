@@ -78,9 +78,9 @@ class IPCameraApp(object):
                 return
 
 
-def input_loop(app):
+def input_loop(app, inport):
     sock = socket()
-    sock.bind(('', 9999))
+    sock.bind(('', inport))
     sock.listen(1)
     while True:
         print('Waiting for input stream')
@@ -97,15 +97,15 @@ def input_loop(app):
                     q.put(data)
         print ('Lost input stream from', addr)
 
-def runForever():
+def runForever(inport, outport):
     #Launch an instance of wsgi server
     app = IPCameraApp()
-    port = 1337
-    print ('Launching camera server on port', port)
-    httpd = create_server('', port, app)
+    print ('Reading mjpeg stream on port', inport)
+    print ('Launching camera server on port', outport)
+    httpd = create_server('', outport, app)
 
     print ('Launch input stream thread')
-    t1 = Thread(target=input_loop, args=[app])
+    t1 = Thread(target=input_loop, args=[app, inport])
     t1.setDaemon(True)
     t1.start()
 

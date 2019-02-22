@@ -13,8 +13,10 @@ def projectName = 'CameraVision'
 def team = '997'
 // Put in a host address for network tables simulator server or leave blank for roboRio
 def nthost = 'localhost'
-// Put in a URL for the web camera
-def cameraURL = 'http://localhost:1337/mjpeg_stream'
+// Put in a URL for the front web camera
+def frontCameraURL = 'http://localhost:1337/mjpeg_stream'
+// Put in a URL for the back web camera
+def backCameraURL = 'http://localhost:1336/mjpeg_stream'
 
 // Shouldn't need to change anything below this point
 
@@ -73,8 +75,8 @@ shadowJar {
   baseName = projectName
 
   doLast {
-    def commandString = "java -Djava.library.path=. -jar ${projectName}.jar --team ${team} ${nthostSwitch} --cameraurl \"${cameraURL}\""
-    def debugCommandString = "java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=1044 -Djava.library.path=. -jar ${projectName}.jar --team ${team} ${nthostSwitch} --cameraurl \"${cameraURL}\""
+    def commandString = "java -Djava.library.path=. -jar ${projectName}.jar --team ${team} ${nthostSwitch} --frontcameraurl \"${frontCameraURL}\" --backcameraurl \"${backCameraURL}\""
+    def debugCommandString = "java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=1044 -Djava.library.path=. -jar ${projectName}.jar --team ${team} ${nthostSwitch} --frontcameraurl \"${frontCameraURL}\" --backcameraurl \"${backCameraURL}\""
 
     if (buildType == "windows") {
       def runFile = new File("${scriptsDir}/run${projectName}.bat")

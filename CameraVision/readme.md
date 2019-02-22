@@ -13,8 +13,10 @@ def projectName = 'CameraVision'
 def team = '997'
 // Put in a host address for network tables simulator server or leave blank for roboRio
 def nthost = 'localhost'
-// Put in a URL for the web camera
-def cameraURL = 'http://localhost:1337/mjpeg_stream'
+// Put in a URL for the front web camera
+def frontCameraURL = 'http://localhost:1337/mjpeg_stream'
+// Put in a URL for the back web camera
+def backCameraURL = 'http://localhost:1336/mjpeg_stream'
 ```
 
 The nthost parameter contains the host (ip address or hostname) of a host running the network tables server.  It will receive the interpreted output from the frames decoded from this app.  If you leave this blank, then the roboRio will automatically try to be detected.  You can pass --noNT and any network tables writing will be bypassed.
@@ -33,9 +35,11 @@ You can run this application with the following command `java -jar CameraVision-
 The following option is required: [--team | -t]
 Usage: CameraVision [options]
   Options:
-    --cameraurl, -c
-      Use specified MJPEG over http streaming source (overrides NetworkTables
-      value)
+    --frontcameraurl, -f
+      Use specified MJPEG over http streaming source for front camera
+      Default: <empty string>
+    --backcameraurl, -b
+      Use specified MJPEG over http streaming source for back camera
       Default: <empty string>
     --help
 
@@ -43,7 +47,7 @@ Usage: CameraVision [options]
       Do not call out to network tables to write interpreted values
       Default: false
     --nthost, -h
-      NetworkTables server host IP address (for testing)
+      NetworkTables server host IP address (usually roborio but could be localhost for testing)
       Default: <empty string>
   * --team, -t
       FIRST team number
@@ -51,15 +55,47 @@ Usage: CameraVision [options]
 ```
 
 ## Usage
-Once this application is run, it publishes two HTTP endpoints:
-`http://localhost:1185` is the source image stream in MJPEG over HTTP format and 
+Once this application is run, it publishes one HTTP endpoints:
 `http://localhost:1186` is the image processed image stream in MJPEG over HTTP format
 
 The application also writes image processed interpreted values to network tables:
 
-| Key                               | Type    | Description                                     |
-| --------------------------------- | ------- | ----------------------------------------------- |
-| `SmartDashboard\BlueBallFound`    | boolean | True if any blue ball is found in frame         |
-| `SmartDashboard\BlueBallCount`    | int     | Count of blue balls found in frame              |
-| `SmartDashboard\RedBallFound`     | boolean | True if any red ball is found in frame          |
-| `SmartDashboard\RedBallCount`     | int     | Count of red balls found in frame               |
+| Key                                  | Type    | Description                                                                                           |
+| ------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------- |
+| `Vision\RangeInInches`               | number  | Range to selected target in inches                                                                    |
+| `Vision\CameraAngleInDegrees`        | number  | Horizontal angle of camera relative to robot, -90 to 90 degrees, with 0 being perpendicular to front  |
+| `Vision\AngleToTargetInDegrees`      | number  | Position of robot relative to target, -90 to 90 degrees, with 0 degrees being perpendicular to target |
+| `Vision\NormalizedPointFromCenter\X` | number  | -1 to 1 representing orientation of camera angle to getting target in horizontal center of FOV        |
+| `Vision\NormalizedPointFromCenter\Y` | number  | -1 to 1 representing orientation of camera angle to getting target in vertical center of FOV          |
+
+Given that the cameras are not in the center of the robot, the normalized points will have to be adjusted to compensate for that.
+
+Note the this application supports two cameras for 2019 Deepspace: a front camera and a rear camera. Also note that the application
+supports Microsoft LifeCam HD-3000 and HD-5000 cameras ONLY. It will throw an exception if you try to use any other camera type.
+Finally note the location of the USB ports for the cameras below. Do not just plug them into any port. 
+
+On the Pi3 B+, USB ports are mapped via udev rules to the following symlinks:
+
+| Port          | Symlink           | Physical location                 |
+| ------------- | ----------------- | --------------------------------- |
+| `1-1.3:1.0`   | `/dev/videofront` | Top port farthest from ethernet   |
+| `1-1.1.2:1.0` | `/dev/videoback`  | Top port closest to ethernet      |
+
+On the Pi3 B, USB ports are mapped via udev rules to the following symlinks:
+
+| Port          | Symlink           | Physical location                 |
+| ------------- | ----------------- | --------------------------------- |
+| `1-1.4:1.0`   | `/dev/videofront` | Top port farthest from ethernet   |
+| `1-1.2:1.0`   | `/dev/videoback`  | Top port closest to ethernet      |
+
+For the Pi3 B+ (rev a020d3), the following udev rules should exist in `/etc/udev/rules.d/99-usb.rules`:
+```
+KERNEL=="video*", KERNELS=="1-1.3:1.0", SYMLINK+="videofront"
+KERNEL=="video*", KERNELS=="1-1.1.2:1.0", SYMLINK+="videoback"
+```
+
+For the Pi3 B (rev a02082):
+```
+KERNEL=="video*", KERNELS=="1-1.4:1.0", SYMLINK+="videofront"
+KERNEL=="video*", KERNELS=="1-1.2:1.0", SYMLINK+="videoback"
+```
