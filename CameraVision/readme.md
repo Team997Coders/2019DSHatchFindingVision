@@ -70,7 +70,9 @@ The application also writes image processed interpreted values to network tables
 
 Given that the cameras are not in the center of the robot, the normalized points will have to be adjusted to compensate for that.
 
-Note the this application supports two cameras.
+Note the this application supports two cameras for 2019 Deepspace: a front camera and a rear camera. Also note that the application
+supports Microsoft LifeCam HD-3000 and HD-5000 cameras ONLY. It will throw an exception if you try to use any other camera type.
+Finally note the location of the USB ports for the cameras below. Do not just plug them into any port. 
 
 On the Pi3 B+, USB ports are mapped via udev rules to the following symlinks:
 
