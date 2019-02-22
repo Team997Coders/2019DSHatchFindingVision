@@ -70,8 +70,16 @@ The application also writes image processed interpreted values to network tables
 
 Given that the cameras are not in the center of the robot, the normalized points will have to be adjusted to compensate for that.
 
-Note the this application supports two cameras. On the Pi, USB ports are mapped via udev rules
-to the following symlinks:
+Note the this application supports two cameras.
+
+On the Pi3 B+, USB ports are mapped via udev rules to the following symlinks:
+
+| Port          | Symlink           | Physical location                 |
+| ------------- | ----------------- | --------------------------------- |
+| `1-1.3:1.0`   | `/dev/videofront` | Top port farthest from ethernet   |
+| `1-1.1.2:1.0` | `/dev/videoback`  | Top port closest to ethernet      |
+
+On the Pi3 B, USB ports are mapped via udev rules to the following symlinks:
 
 | Port          | Symlink           | Physical location                 |
 | ------------- | ----------------- | --------------------------------- |
@@ -84,7 +92,7 @@ KERNEL=="video*", KERNELS=="1-1.3:1.0", SYMLINK+="videofront"
 KERNEL=="video*", KERNELS=="1-1.1.2:1.0", SYMLINK+="videoback"
 ```
 
-For the Pi3 B:
+For the Pi3 B (rev a02082):
 ```
 KERNEL=="video*", KERNELS=="1-1.4:1.0", SYMLINK+="videofront"
 KERNEL=="video*", KERNELS=="1-1.2:1.0", SYMLINK+="videoback"
