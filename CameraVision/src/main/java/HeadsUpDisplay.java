@@ -17,6 +17,7 @@ public class HeadsUpDisplay {
   private final ImageAnnotator imageAnnotator;
   private final HatchTargetPipelineInterpreter interpreter;
   private Map<CameraControlStateMachine.Trigger, Point> buttonToPointMap = new HashMap<CameraControlStateMachine.Trigger, Point>();
+  private Map<CameraControlStateMachine.Trigger, Point> autoLockChoicesToPointMap = new HashMap<CameraControlStateMachine.Trigger, Point>();
   private Map<String, Point> identifierToPointMap = new HashMap<String, Point>();
   private final Map<CameraControlStateMachine.Trigger, String> buttonToIdentifierMap = new HashMap<>();
   private Point slewPoint;
@@ -74,7 +75,7 @@ public class HeadsUpDisplay {
         if (triggerString.trim().length() == 0) {
           hud.selectTarget(null);
         } else {
-          CameraControlStateMachine.Trigger trigger = Enum.valueOf(CameraControlStateMachine.Trigger.class, triggerString);   
+          CameraControlStateMachine.Trigger trigger = Enum.valueOf(CameraControlStateMachine.Trigger.class, triggerString);
           hud.selectTarget(trigger);       
         }
       }
@@ -88,8 +89,12 @@ public class HeadsUpDisplay {
   protected void selectTarget(CameraControlStateMachine.Trigger trigger) {
     // Reset the slewpoint if we have a trigger value
     if (trigger != null) {
-      // Translate to slew point
+      // Try to translate to slew point for button presses
       slewPoint = buttonToPointMap.get(trigger);
+      if (slewPoint == null) {
+        // Translate to slew point for auto lock
+        slewPoint = autoLockChoicesToPointMap.get(trigger);
+      }
     }
   }
 
@@ -112,7 +117,7 @@ public class HeadsUpDisplay {
     imageAnnotator.beginAnnotation(inputImage);
 
     String scoringDirection = smartDashboard.getString("Scoring Direction", "Back");
-    int panAngle = (int) Math.round(Math.abs(smartDashboard.getNumber(String.format("%s Camera Pan Angle", scoringDirection), 90) - 90));
+    int panAngle = (int) Math.round(smartDashboard.getNumber(String.format("%s Camera Pan Angle", scoringDirection), 90) - 90);
 
     // Look at current state machine state and act
     if (state == CameraControlStateMachine.State.IdentifyingTargets) {
@@ -121,6 +126,8 @@ public class HeadsUpDisplay {
       imageAnnotator.printTargetInfo(panAngle);
       // This is how we associate hatch targets to buttons
       mapButtonsToTargetCenterPoints(interpreter.getHatchTargetCenters());
+      // Associate closest hatch targets to FOV center to autolock left and right choices
+      mapAutoLockChoicesToTargetCenterPoints(interpreter.getHatchTargetCentersClosestToFOVCenter());
       // Print the button identifiers on the hatch targets
       imageAnnotator.printTargetIdentifiers(identifierToPointMap);
       // Write the selectable target triggers to network tables so the state machine
@@ -236,9 +243,54 @@ public class HeadsUpDisplay {
           tnfeRetries++;
         }
       }
+    } else if (state == CameraControlStateMachine.State.AutoLocked) {
+      try {
+        // Update the known center of the selected target from the last known point
+        HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
+        tnfeRetries = 0;
+        slewPoint = hatchTarget.targetRectangle().center;
+        // Draw the targeting rectangle showing we are locked
+        imageAnnotator.drawAutoLockedRectangle(slewPoint);
+        // Print information about target
+        imageAnnotator.printTargetInfo(hatchTarget, panAngle);
+        // Continue writing the selected target information to network tables
+        SelectedTarget selectedTarget = new SelectedTarget(visionNetworkTable);
+        Point normalizedPointFromCenter = interpreter.getNormalizedTargetPositionFromCenter(slewPoint);
+        selectedTarget.write(hatchTarget.rangeInInches(), 
+            panAngle, 
+            Math.toDegrees(hatchTarget.aspectAngleInRadians()), 
+            normalizedPointFromCenter.x, 
+            normalizedPointFromCenter.y);
+      } catch (TargetNotFoundException e) {
+        if (tnfeRetries > tnfeRetryLimit) {
+          tnfeRetries = 0;
+          // We can no longer find a target containing our selected target point.
+          visionNetworkTable.putString("Fire", CameraControlStateMachine.Trigger.LoseLock.toString());
+        } else {
+          tnfeRetries++;
+        }
+      }
     }
 
     return imageAnnotator.getCompletedAnnotation();
+  }
+
+  private void mapAutoLockChoicesToTargetCenterPoints(ArrayList<Point> centerPoints) {
+    autoLockChoicesToPointMap.clear();
+    int index = 0;
+    for(Point point : centerPoints) {
+      switch (index) {
+        case 0:
+          autoLockChoicesToPointMap.put(CameraControlStateMachine.Trigger.AutoLockLeft, point);
+          break;
+        case 1:
+          autoLockChoicesToPointMap.put(CameraControlStateMachine.Trigger.AutoLockRight, point);
+          break;
+        default:
+          // Do nothing
+      }
+      index +=1;
+    }    
   }
 
   private void mapButtonsToTargetCenterPoints(ArrayList<Point> centerPoints) {

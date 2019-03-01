@@ -196,6 +196,50 @@ public class HatchTargetPipelineInterpreter {
 	}
 
 	/**
+	 * Return up to the two closest targets to the center of the
+	 * field of view.
+	 * 
+	 * @return	As array list of points ordered left to right.
+	 */
+	public ArrayList<Point> getHatchTargetCentersClosestToFOVCenter() {
+		ArrayList<Point> hatchTargetCenters = new ArrayList<Point>();
+		ArrayList<HatchTarget> hatchTargets = getHatchTargets();
+		long targetCount = targetCount();
+		double centerX = cameraParameters.getFOVPixelWidth() / 2;
+		HatchTarget closestLeft;
+		HatchTarget closestRight;
+		HatchTarget currentTarget;
+		HatchTarget priorTarget;
+
+		if (targetCount == 0) {
+			// do nothing
+		} else if (targetCount == 1) {
+			// Add the same one twice so that either left or right picks it up
+			hatchTargetCenters.add(hatchTargets.get(0).center());
+			hatchTargetCenters.add(hatchTargets.get(0).center());
+		} else {
+			// Processing left to right...
+			closestLeft = hatchTargets.get(0);
+			closestRight = hatchTargets.get(1);
+			double leastDistanceFromCenter = Math.abs(closestLeft.center().x - centerX) + Math.abs(closestRight.center().x - centerX);
+			for(int index = 2; index < targetCount; index++) {
+				currentTarget = hatchTargets.get(index);
+				priorTarget = hatchTargets.get(index - 1);
+				double currentDistanceFromCenter = Math.abs(currentTarget.center().x - centerX) + Math.abs(priorTarget.center().x - centerX);
+				if (currentDistanceFromCenter < leastDistanceFromCenter) {
+					closestLeft = priorTarget;
+					closestRight = currentTarget;
+					leastDistanceFromCenter = currentDistanceFromCenter;
+				}
+			}
+			hatchTargetCenters.add(closestLeft.center());
+			hatchTargetCenters.add(closestRight.center());
+		}
+
+		return hatchTargetCenters;
+	}
+
+	/**
 	 * Did we find at least one target on a processed frame?
 	 * 
 	 * @return True if at least one target was found

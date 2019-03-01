@@ -150,6 +150,19 @@ public class ImageAnnotator {
     Imgproc.putText(outputImage, "LOCKED!", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
   }
 
+  public void drawAutoLockedRectangle(Point slewPoint) throws TargetNotFoundException {
+    HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
+    drawRotatedRect(hatchTarget.targetRectangle(), hatchTargetSlewingColor, 4);
+    Point textStart = hatchTarget.center();
+    textStart.x -= 30;
+    textStart.y -= 30;
+    Imgproc.putText(outputImage, "A=cancel", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
+    textStart = hatchTarget.center();
+    textStart.x -= 30;
+    textStart.y += 5;
+    Imgproc.putText(outputImage, "LOCKED!", textStart, Core.FONT_HERSHEY_COMPLEX_SMALL, .75, textColor);
+  }
+
   public void drawDrivingRectangle(Point slewPoint) throws TargetNotFoundException {
     HatchTarget hatchTarget = interpreter.getHatchTargetFromPoint(slewPoint);
     drawRotatedRect(hatchTarget.targetRectangle(), hatchTargetSlewingColor, 4);
