@@ -112,7 +112,7 @@ public class HeadsUpDisplay {
     imageAnnotator.beginAnnotation(inputImage);
 
     String scoringDirection = smartDashboard.getString("Scoring Direction", "Back");
-    int panAngle = (int) Math.round(Math.abs(smartDashboard.getNumber(String.format("%s Camera Pan Angle", scoringDirection), 90) - 90));
+    int panAngle = (int) Math.round(smartDashboard.getNumber(String.format("%s Camera Pan Angle", scoringDirection), 90) - 90);
 
     // Look at current state machine state and act
     if (state == CameraControlStateMachine.State.IdentifyingTargets) {
