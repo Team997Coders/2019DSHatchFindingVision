@@ -11,6 +11,6 @@ public class CameraControlStateMachine {
    * Triggers that cause state transitions.
    */
   public enum Trigger {
-    AButton, BButton, XButton, YButton, LockOn, FailedToLock, LoseLock, IdentifyTargets, Slew, LeftThumbstickButton, LeftShoulderButton, AutoLockLeft, AutoLockRight
+    AButton, BButton, XButton, YButton, LockOn, FailedToLock, LoseLock, IdentifyTargets, Slew, LeftThumbstickButton, LeftShoulderButton, AutoLockLeft, AutoLockRight, AutoLockOn
   }
 }
