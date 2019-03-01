@@ -1,4 +1,5 @@
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -6,10 +7,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.opencv.core.Mat;
-
+import org.opencv.core.Point;
+import org.opencv.core.RotatedRect;
 import org.junit.Test;
 
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
+import edu.wpi.first.wpilibj.tables.ITable;
 
 public class HeadsUpDisplayUnitTest {
 	// This must be done in order to call opencv classes
@@ -85,5 +88,39 @@ public class HeadsUpDisplayUnitTest {
     //Assert
     // Network table should have a Fire value of FailedToLock
     verify(visionNetworkTableMock, times(1)).putString("Fire", "FailedToLock");
+  }
+
+  @Test
+  public void itShouldWritePanAngleToNetworkTables() {
+    // Assemble
+    ImageAnnotator imageAnnotatorMock = mock(ImageAnnotator.class);
+    HatchTargetPipelineInterpreter hatchTargetPipelineInterpreterMock = mock(HatchTargetPipelineInterpreter.class);
+    NetworkTable visionNetworkTableMock = mock(NetworkTable.class);
+    NetworkTable smartDashboardMock = mock(NetworkTable.class);
+    Mat inputImageMock = mock(Mat.class);
+    HatchTarget hatchTargetMock = mock(HatchTarget.class);
+    ITable selectedTargetSubTableMock = mock(ITable.class);
+    ITable normalizedPointSubtable = mock(ITable.class);
+    when(hatchTargetMock.targetRectangle()).thenReturn(new RotatedRect());
+    when(hatchTargetMock.aspectAngleInRadians()).thenReturn(0D);
+    when(smartDashboardMock.getString("Scoring Direction", "Back")).thenReturn("Front");
+    when(smartDashboardMock.getNumber("Front Camera Pan Angle", 90)).thenReturn(30D);
+    when(hatchTargetPipelineInterpreterMock.getHatchTargetFromPoint(null)).thenReturn(hatchTargetMock);
+    when(hatchTargetPipelineInterpreterMock.getNormalizedTargetPositionFromCenter(isA(Point.class))).thenReturn(new Point());
+    when(visionNetworkTableMock.getSubTable("SelectedTarget")).thenReturn(selectedTargetSubTableMock);
+    when(selectedTargetSubTableMock.getSubTable("NormalizedPointFromCenter")).thenReturn(normalizedPointSubtable);
+
+    HeadsUpDisplay hud = new HeadsUpDisplay(imageAnnotatorMock, 
+      hatchTargetPipelineInterpreterMock, 
+      visionNetworkTableMock, 
+      smartDashboardMock);
+
+    hud.setState(CameraControlStateMachine.State.AutoLocked);
+
+    // Act
+    hud.update(inputImageMock);
+
+    // Assert
+    verify(selectedTargetSubTableMock, times(1)).putNumber("CameraAngleInDegrees", -60D);
   }
 }
